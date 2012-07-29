@@ -4,13 +4,13 @@ This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unport
 Absolutely no warranties or guarantees given or implied - use at your own risk
 Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
 --]]
-cSoundPlayer = 	{ eventName = "onComplete"}
+cSoundPlayer = 	{ eventName = "onComplete", className="cSoundPlayer"}
 require "inc.lib.lib-class"
 
 --TBD remove listener and use events
 
 function cSoundPlayer:play(paFiles, poListener, pbLooped)
-	local oInstance = cClass.createInstance("cScroller", cSoundPlayer)
+	local oInstance = cClass.createInstance(self)
 	
 	oInstance.files=paFiles
 	oInstance.nowPlaying = 0

@@ -11,12 +11,12 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 require "inc.lib.lib-events"
 require "inc.lib.lib-class"
 
-cDraggable = {delay=50, scrollX = true, scrollY = true, usePhysics = true, dragObj=nil}
-cLibEvents:instrument(cDraggable)
+cDraggable = {delay=50, scrollX = true, scrollY = true, usePhysics = true, dragObj=nil, className="cDraggable"}
+cLibEvents.instrument(cDraggable)
 
 function cDraggable:create( poThing)
 	-- arcane lua instance creation 
-	local 	oInstance = cClass.createInstance("cDraggable", cDraggable)
+	local 	oInstance = cClass.createInstance(self)
 
 	-- initialise
 	oInstance.thing = poThing

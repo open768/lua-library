@@ -32,7 +32,7 @@ local FB_IS_AUTHORISED_KEY = "fbiak"
 	sim_error = false,
 	sim_bool_return = false
 }
-cLibEvents:instrument(cFacebook)
+cLibEvents.instrument(cFacebook)
 
  --#################################################################
  --#

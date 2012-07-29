@@ -5,14 +5,14 @@ Absolutely no warranties or guarantees given or implied - use at your own risk
 Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
 --]]
 
-cFader = {}
+cFader = {className="cFader"}
 require "inc.lib.lib-class"
 
 --*******************************************************
 function cFader:create( poImage, piInterval)
 	local oGroup, oInstance
 	
-	oInstance = cClass.createInstance("cFader", cFader)
+	oInstance = cClass.createInstance(self)
 	
 	-- set up the object
 	oInstance.image = poImage

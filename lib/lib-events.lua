@@ -5,6 +5,7 @@ Absolutely no warranties or guarantees given or implied - use at your own risk
 Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
 --]]
 require "inc.lib.lib-debug"
+require "inc.3lib.vardump"
 
 cLibEvents = {}
 
@@ -12,51 +13,53 @@ cLibEvents = {}
 --* call this method to add event listeners to a table 
 -- usage dispatchEvent({name="myevent"})
 --*******************************************************
-function cLibEvents:instrument(poObj)
+function cLibEvents.instrument(poObj)
 	if poObj["addListener"] then 
-		cDebug:print(DEBUG__WARN,"table allready instrumented")
+		cDebug:print(DEBUG__ERROR,"table allready instrumented")
 		error ("cLibEvents: error")
 	end
 	
-	poObj.addListener = function(poSelf,psEvent, poListener) 
-			cLibEvents:addListener(poSelf,psEvent, poListener)
-		end
-	poObj.notify = function (poSelf,poEvent)
-			return cLibEvents:notify(poSelf, poEvent)
-		end
+	poObj.addListener = cLibEvents.addListener
+	poObj.notify = cLibEvents.notify
+	poObj._notify = cLibEvents._notify
 end
 
 --*******************************************************
 -- only one listener per event! could do more
 --*******************************************************
-function cLibEvents:addListener(poObj,psEvent, poListener)
+function cLibEvents.addListener(poObj,psEvent, poListener)
 	if not poObj.EventListeners then
 		poObj.EventListeners  = {}
 	end
 	
-	poObj.EventListeners[psEvent]  = poListener 
+	if poObj.EventListeners[psEvent] ~= nil then
+		cDebug:print(DEBUG__ERROR,"listener exists for :", psEvent)
+		error ("cLibEvents: listener exists for ", psEvent)
+	else
+		poObj.EventListeners[psEvent]  = poListener 
+	end
 end
 
 --*******************************************************
-function cLibEvents:notify( poObj, poEvent)
+function cLibEvents.notify( poObj, poEvent)
 	local bSuccess, retval 
 	
-	bSuccess, retval = pcall( self._notify, self, poObj, poEvent)
+	if poEvent  == nil then 
+		error(".notify event called? - you meant :notify") 
+	end
+	
+	bSuccess, retval = pcall( poObj._notify, poObj, poEvent)
 	if bSuccess then
 		return retval 
 	else
-		print ("ERROR:"..retval)
+		cDebug:print(DEBUG__ERROR,"notify failed:", poEvent.name,":", retval)
 	end
 end
 
 --*******************************************************
-function cLibEvents:_notify( poObj, poEvent)
+function cLibEvents._notify( poObj, poEvent)
 	local oListener, sEventNamSWSe, oCall
 	local bOk, oStatusOrMsg
-	
-	if poEvent == nil then
-		error ".dispatch event called - you meant :"
-	end
 	
 	sEventName = poEvent["name"]
 	
@@ -90,6 +93,11 @@ function cLibEvents:_notify( poObj, poEvent)
 				end
 			else
 				cDebug:print(DEBUG__ERROR,"CLibEvents: method not found on listener -", sEventName)
+				cDebug:print(DEBUG__DEBUG,"listener")
+				vardump(oListener)
+				cDebug:print(DEBUG__DEBUG,"self")
+				vardump(poObj)
+				
 				error("cLibEvents error")
 			end
 		end

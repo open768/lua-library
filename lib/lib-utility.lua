@@ -63,7 +63,7 @@ function utility:makeScreenZone( piDelta, pbIsPhysics, pfnEventHandler)
 	local x1,y1,x2,y2, iWidth
 	local iAngle
 	
-	print ("making screen zone")
+	cDebug:print(DEBUG__INFO, "making screen zone" )
 	
 	-- corners of the zone 
 	x1=self.Screen.x+piDelta
@@ -369,7 +369,7 @@ end
 --*******************************************************
 function utility.removeChildren(poGroup)
 	while poGroup.numChildren >0 do
-		poGroup[i]:removeSelf()
+		poGroup[1]:removeSelf()
 	end
 end
 
@@ -398,6 +398,14 @@ function utility.prv__splitString(paArray, psString)
 	end
 end
 
+--*******************************************************
+function utility.var( pvValue, pvDefault)
+	if pvValue==nil then
+		return pvDefault
+	else
+		return pvValue
+	end
+end
 
 -- ####################################################
 -- # global event listeners

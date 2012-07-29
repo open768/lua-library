@@ -23,15 +23,16 @@ require "inc.lib.lib-class"
 -- # cardscene object
 -- ####################################################################
 cDisplayCard = {
+	className="cDisplayCard",
 	name = nil,
 	view = nil,
 	purgeOnExit = false
 }
 
 function cDisplayCard:create( psName )
-	local oInstance = cClass.createInstance("cDisplayCard", cDisplayCard)
+	local oInstance = cClass.createInstance(self)
 	
-	cLibEvents:instrument(oInstance)
+	cLibEvents.instrument(oInstance)
 	oInstance.name = psName
 	oInstance.view = nil
 	
@@ -164,7 +165,7 @@ function cCards:goBack( psEffect, piEffectTime)
 	
 	iLen = #(self.history)
 	if iLen < 2 then
-		print ("Can't go back in storyboard history")
+		cDebug:print(DEBUG__WARN, "Can't go back in storyboard history")
 		return false
 	else
 		-- hide the current scene

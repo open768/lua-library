@@ -31,7 +31,7 @@ function cHttp:init()
 		network.setStatusListener( self.reachableDomain, fnCallBack )
 	else
 		self:checkConnectivity()
-		print ("Net is reachable: "..tostring(self.isNetReachable))
+		cDebug:print(DEBUG__INFO, "cHttp: Net is reachable: ", self.isNetReachable)
 	end
 end
 

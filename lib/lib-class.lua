@@ -6,7 +6,7 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 --]]
 require ("inc.lib.lib-debug")
 
-cClass = {}
+cClass = {className = "cClass"}
 
 --***********************************************************
 --sets the index function to be the same of another table - thus inheritance
@@ -15,32 +15,32 @@ function cClass.setParent( poObj, poParent)
 end
 
 --***********************************************************
-function cClass.createGroupInstance(psClassname, poSuperClass)
+function cClass.createGroupInstance(poExemplar)
 	local oInstance
 	
-	if (not psClassname) or (not poSuperClass) then
-		error ("createInstance needs 2 arguments")
-	end
+	if poExemplar==nil then	error ("cClass.CGI no arguments")	end
+	if not poExemplar.className then error ("cClass.CGI :exemplar must have property className")	end
 	
+	cDebug:print(DEBUG__EXTRA_DEBUG, "cClass.CGI create: ", poExemplar.className)
 	oInstance = display.newGroup()
-	cClass.addParent(oInstance, poSuperClass)
-	oInstance.className = psClassname
+	cClass.addParent(oInstance, poExemplar)
+	oInstance.className = poExemplar.className
 
 	return oInstance
 end
 
 --***********************************************************
 --sets the index function to be the same of another table - thus inheritance
-function cClass.createInstance(psClassname, poSuperClass)
+function cClass.createInstance(poExemplar)
 	local oInstance
 	
-	if (not psClassname) or (not poSuperClass) then
-		error ("createInstance needs 2 arguments")
-	end
+	if poExemplar ==nil then error ("cClass.CI no arguments")	end
+	if not poExemplar.className then	error ("cClass.CI: exemplar must have property className")	end
 	
+	cDebug:print(DEBUG__EXTRA_DEBUG, "cClass.CI create: ", poExemplar.className)
 	oInstance = {}
-	oInstance.className = psClassname
-	cClass.setParent ( oInstance , poSuperClass )  
+	oInstance.className = poExemplar.className
+	cClass.setParent ( oInstance , poExemplar )  
 
 	return oInstance
 end
@@ -54,7 +54,7 @@ function cClass.addParent( poObj, poParent)
 	for sName,vValue in pairs(poParent) do
 		--if (type(vValue) == 'function') then
 		if poObj[sName] then
-			cDebug:print(DEBUG__WARN, "warning cClass.addParent: " , sName , " is already defined - skipping")
+			cDebug:print(DEBUG__WARN, "addParent: " , poObj.className, ".", sName , " exists - skipping")
 		else
 			--cDebug:print(DEBUG__DEBUG, "cClass adding ", sName);
 			poObj[sName] = vValue

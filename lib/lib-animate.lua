@@ -36,11 +36,11 @@ require "inc.lib.lib-class"
 --########################################################
 --#
 --########################################################
-cAnimatorItem = { }
+cAnimatorItem = { className="cAnimatorItem" }
 
 --*******************************************************
 function cAnimatorItem:create(poObj, paFinalState, poOptions)
-	local oInstance = cClass.createInstance("cAnimatorItem", cAnimatorItem)
+	local oInstance = cClass.createInstance(self)
 	
 	oInstance.obj=poObj
 	oInstance.state=paFinalState
@@ -58,11 +58,11 @@ end
 --########################################################
 --#
 --########################################################
-cAnimator = {eventName="onComplete"}
-cLibEvents:instrument(cAnimator)
+cAnimator = {eventName="onComplete", className="cAnimator"}
+cLibEvents.instrument(cAnimator)
 
 function cAnimator:create( )
-	local oInstance = cClass.createInstance("cAnimator", cAnimator)
+	local oInstance = cClass.createInstance(self)
 	
 	oInstance.commands = {}
 	oInstance.step = 0
@@ -92,7 +92,7 @@ function cAnimator:go()
 	
 	-- dont do anything if no commands
 	if #(self.commands) == 0 then 
-		print ("no transitions")
+		cDebug:print(DEBUG__WARN,"no transitions")
 		return
 	end
 	

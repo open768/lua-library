@@ -55,7 +55,7 @@ function cDebug:print(piLevel, ...)
 				table.insert(aStrings,tostring(vArg))
 			end
 		end	
-		sText = table.concat(aStrings, " ")
+		sText = table.concat(aStrings, "")
 		aStrings = nil
 	end
 	
@@ -79,7 +79,7 @@ function cDebug:filePrint(psMessage)
 		return
 	end	
 	
-	if not self.filehandle then
+	if self.filehandle == nil then
 		if system.getInfo("environment") == "simulator" then
 			sFolderPath = system.pathForFile( self.folder, system.DocumentsDirectory )
 			sFilePath = sFolderPath .. "\\" ..  self.filename
@@ -87,7 +87,7 @@ function cDebug:filePrint(psMessage)
 			sFolderPath = self.droidFolderRoot.."/"..self.folder
 			sFilePath = sFolderPath .. "/" ..  self.filename
 		end
-		if not utility.fileExists(sFolderPath) == nil then
+		if not utility.fileExists(sFolderPath) then
 			--os.execute('mkdir "'..sFolderPath..'"')
 			lfs.mkdir(sFolderPath)
 		end

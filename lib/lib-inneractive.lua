@@ -19,10 +19,11 @@ local cid_settings_key = "inner_cid"
 cIaAdData = {
 	clickUrl = nil,
 	imageUrl = nil,
-	CID=nil
+	CID=nil,
+	className="cIaAdData"
 }
 function cIaAdData:create()
-	return cClass.createInstance("cIaAdData" ,cIaAdData )
+	return cClass.createInstance(self)
 end
 
 --########################################################################
@@ -42,7 +43,7 @@ cInnerActive = {
 	version = "Sm2m-1.5.3"
 }
 cSettings:load()
-cLibEvents:instrument(cInnerActive)
+cLibEvents.instrument(cInnerActive)
 
 -- *********************************************************
 function cInnerActive:showFullScreenAd(psAid, poGroup)

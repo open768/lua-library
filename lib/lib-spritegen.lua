@@ -7,13 +7,13 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 require "sprite"
 require "inc.lib.lib-class"
 
-cSpriteGenerator = {}
+cSpriteGenerator = {className="cSpriteGenerator"}
 
 
 --*******************************************************
 function cSpriteGenerator:create(psImageFile, piWidth, piHeight, piMaxSprites)
 	-- arcane lua instance creation 
-	local oInstance = cClass.createInstance("cSpriteGenerator", cSpriteGenerator)
+	local oInstance = cClass.createInstance(self)
 	
 	oInstance.maSpriteSets = {}
 	oInstance.miMaxSprites = piMaxSprites

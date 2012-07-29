@@ -41,9 +41,11 @@ cColours =
 	violet="ee82ee",wheat="f5deb3",white="ffffff",whitesmoke="f5f5f5",yellow="ffff00",
 	yellowgreen="9acd32" }  
  
- --******************************************************* 
- function cColours:getRGB(psColour) 
+--******************************************************* 
+function cColours:getRGB(psColour) 
 	local sRGB, sR, sG, sB
+	
+	if psColour ==nil then error ("cColours:getRGB missing colour name") end
 	
 	sRGB = self[psColour]
 	if not sRGB then
@@ -55,11 +57,15 @@ cColours =
 	iB = hex_dec(sRGB:sub(5,6))
 	
 	return {r=iR,g=iG,b=iB}
- end
+end
  
- --******************************************************* 
- function cColours:get(psColour)
+--******************************************************* 
+function cColours:get(psColour)
 	local oRGB = self:getRGB(psColour)
-	return {oRGB.r,oRGB.g,oRGB.b,255}
+ 	return {oRGB.r,oRGB.g,oRGB.b,255}
 end 
+
+function cColours.explode(poColour)
+	return poColour.r,poColour.g,poColour.b
+end
  
