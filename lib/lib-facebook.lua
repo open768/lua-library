@@ -1,0 +1,266 @@
+-- VERSION
+-- -- This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+-- -- http://creativecommons.org/licenses/by-sa/3.0/
+-- -- Absolutely no warranties or guarantees given or implied - use at your own risk
+-- -- Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
+
+require "inc.lib.lib-settings"
+require "inc.lib.lib-utility"
+require "inc.lib.lib-events"
+require "inc.lib.lib-debug"
+
+local facebook = require "facebook"
+local json = require "json"
+
+ --#################################################################
+ --#
+ --#################################################################
+local FB_TOKEN_KEY = "fbtk"
+local FB_TOKEN_EXPIRY_KEY = "fbtek"
+local FB_IS_AUTHORISED_KEY = "fbiak"
+
+ 
+ --#################################################################
+ --#
+ --#################################################################
+ cFacebook = { 
+	errorEventName="onFBError",
+	loginEventName="onFBLogin",
+	requestEventName="onFBRequest",
+	loggedIn = false,
+	fnClosure = nil,
+	sim_error = false,
+	sim_bool_return = false
+}
+cLibEvents:instrument(cFacebook)
+
+ --#################################################################
+ --#
+ --#################################################################
+function cFacebook:login(psAppID)
+	local oEvent = {}
+	
+	if self.fnClosure == nil then
+		self.fnClosure  = cLibEvents.makeEventClosure(self,"onFBEvent")
+	end
+	
+	if utility.isSimulator() then
+		cDebug:print(DEBUG__WARN, "cFacebook simulating login")
+		oEvent.name = "onFBEvent"
+		oEvent.type = "session"
+		oEvent.phase = "login"
+		oEvent.token = "testtokentesttokentesttokentesttoken"
+		oEvent.expiration = "test"
+		oEvent.simulated = true
+		self:onFBEvent(oEvent)
+		return
+	end
+		
+	if cSettings:get(FB_IS_AUTHORISED_KEY) == true then
+		cDebug:print(DEBUG__INFO, "previously authorised - calling login")
+		facebook.login( psAppID, self.fnClosure )
+	else
+		cDebug:print(DEBUG__INFO, "requesting facebook permission")
+		facebook.login( psAppID, self.fnClosure, {"publish_stream"}  )
+	end
+end
+
+--******************************************************************
+function cFacebook:logout()
+	if not self.loggedIn then
+		cDebug:print(DEBUG__INFO, "not logged in")
+		return
+	end
+
+	if utility.isSimulator() then
+		local oEvent = {}
+		
+		cDebug:print(DEBUG__WARN, "cFacebook simulating logout")
+		oEvent.type = "session"
+		oEvent.phase = "logout"
+		oEvent.simulated = true
+		
+		self:onFBEvent(oEvent)
+		return
+	else
+		cDebug:print(DEBUG__INFO, "cFacebook making fb logout request")
+		facebook.logout()
+	end
+end
+
+--******************************************************************
+--note params to post can include 
+-- message, picture, link, name, caption, description, source, place, tags
+function cFacebook:post(psGraphID, poParams)
+	if not self.loggedIn then
+		cDebug:print(DEBUG_ERROR, "cFacebook - not logged in")
+		error("not logged in");
+	end
+	
+	cDebug:print(DEBUG__INFO, "cFacebook post request  ",psGraphID)
+	self.FBResponse = nil
+	
+	if (poParams == nil) then 
+		cDebug:print(DEBUG__INFO, "cFacebook post no params provided")
+		poParams = {} 
+	end
+
+	if utility.isSimulator() then
+		local oEvent = {}
+		
+		cDebug:print(DEBUG__WARN, "cFacebook simulating post")
+		
+		if self.sim_error then
+			cDebug:print(DEBUG__WARN, "simulating error request")
+			self.sim_error = false
+			oEvent.response = json.encode({error={message="simulated error"}})
+		elseif self.sim_bool_return then
+			self.sim_bool_return = false
+			oEvent.response = json.encode(true)
+		else
+			oEvent.response = json.encode({id="test",simulated=1})
+		end
+		oEvent.type = "request"
+		oEvent.simulated = true
+		self:onFBEvent(oEvent)
+	else
+		cDebug:print(DEBUG__INFO, "cFacebook making fb request")
+		facebook.request( psGraphID, "POST", poParams) 
+	end
+end
+
+--******************************************************************
+function cFacebook:request(psGraphID)
+	cDebug:print(DEBUG__INFO, "cFacebook request ",psGraphID)
+	self.FBResponse = nil
+	
+	if utility.isSimulator() then
+		local oEvent = {}
+		
+		cDebug:print(DEBUG__WARN, "cFacebook simulating request")
+		oEvent.type = "request"
+		if self.sim_error then
+			cDebug:print(DEBUG__WARN, "simulating error request")
+			self.sim_error = false
+			oEvent.response = json.encode({error={message="simulated error"}})
+		elseif self.sim_bool_return then
+			self.sim_bool_return = false
+			oEvent.response = json.encode(true)
+		else
+			oEvent.response = json.encode({simulated=1})
+		end
+		oEvent.simulated = true
+		self:onFBEvent(oEvent)
+	else
+		facebook.request( psGraphID )
+	end
+end
+		
+ --#################################################################
+ --#
+ --#################################################################
+function cFacebook:like(psGraphID)
+	if utility.isSimulator() then
+		self.sim_bool_return = true
+	end
+	cDebug:print(DEBUG__INFO, "cFacebook:like", psGraphID)
+	self:post(psGraphID.."/likes")
+end
+
+--******************************************************************
+function cFacebook:comment(psGraphID, psMessage)
+	cDebug:print(DEBUG__INFO, "cFacebook:like", psGraphID)
+	self:post(psGraphID.."/comments", { message=psMessage} )
+end
+
+--******************************************************************
+function cFacebook:postToWall(psMessage)
+	cDebug:print(DEBUG__INFO, "cFacebook:post to wall ")
+	self:post("me/feed", { message=psMessage} )
+end
+
+ --#################################################################
+ --#
+ --#################################################################
+ function cFacebook:onFBEvent(poEvent)
+	local bOK, sErr
+	
+	cDebug:print(DEBUG__DEBUG, "cFacebook:onFBEvent")
+	cDebug:print(DEBUG__INFO, json.encode(poEvent))
+	
+	if  (poEvent.type == "session") then
+		cDebug:print(DEBUG__INFO, "login event")
+		self:onFBLogin(poEvent)
+	elseif (poEvent.type == "request") then
+		cDebug:print(DEBUG__INFO, "request event")
+		self:onFBRequest(poEvent)
+	else
+		cDebug:print(DEBUG_ERROR, "unknown event type:", poEvent.type)
+	end
+end
+ 
+--******************************************************************
+--* EVENTS
+--******************************************************************
+ function cFacebook:onFBLogin(poEvent)
+	cDebug:print(DEBUG__DEBUG, "cFacebook:onFBlogin")
+	if poEvent.phase == "login" then
+		cDebug:print(DEBUG__INFO, "cFacebook: login OK")
+		
+		cSettings:set(FB_TOKEN_KEY, poEvent.token)
+		cSettings:set(FB_TOKEN_EXPIRY_KEY, poEvent.expiration)
+		cSettings:set(FB_IS_AUTHORISED_KEY, true)
+		cSettings:commit()
+		
+		self.loggedIn = true
+	elseif poEvent.phase == "logout" then
+		cDebug:print(DEBUG__INFO, "cFacebook: logged out")
+		self.loggedIn = false
+	else
+		cDebug:print(DEBUG_ERROR, "cFacebook: login Failed")
+	end	
+	
+	poEvent.name = self.loginEventName
+	self:notify(poEvent)
+ end
+ 
+
+ -- *****************************************************************
+function cFacebook:onFBRequest(poEvent)
+	local oResponse
+	
+	cDebug:print(DEBUG__DEBUG, "cFacebook:onFBRequest")
+	
+	if poEvent.response then
+		cDebug:print(DEBUG__DEBUG, "response:",poEvent.response)
+		poEvent.response = json.decode(poEvent.response)
+	else
+		cDebug:print(DEBUG__DEBUG, "no response!")
+	end
+	
+	if poEvent.isError then
+		cDebug:print(DEBUG__ERROR, "request Failed")
+		self.label.text = "request failed"
+		
+		poEvent.name = self.errorEventName
+		poEvent.response = oResponse
+		self:notify(poEvent)
+	else
+		if (type(poEvent.response) == "table") then
+			if (poEvent.response.error) then
+				cDebug:print(DEBUG__ERROR, "request failed")
+				cDebug:print(DEBUG__ERROR, poEvent.response.error.message)
+				poEvent.name = self.errorEventName
+				self:notify(poEvent)
+				return
+			end
+		end 
+		
+		cDebug:print(DEBUG__INFO, "request ok")
+				
+		poEvent.name = self.requestEventName
+		self:notify(poEvent)
+	end
+	
+end
+ 
