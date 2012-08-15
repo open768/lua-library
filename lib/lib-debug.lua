@@ -62,8 +62,24 @@ function cDebug:print(piLevel, ...)
 	sDate = os.date(self.dateFormat)
 		
 	sDebugMsg = aDebugLevels[piLevel]..": "..sDate..": "..sText 
+	
 	print ("LOG:"..sDebugMsg)
 	self:filePrint(sDebugMsg)
+	
+	if piLevel == DEBUG__ERROR then
+		sTraceback = debug.traceback()
+		if sTraceback  then
+			print (sTraceback )
+			self:filePrint(sTraceback)
+		end
+	end
+	
+end
+
+-- **********************************************************
+function cDebug:throw(...)
+	cDebug:print(DEBUG__ERROR, ...)
+	error(table.concat({...}," "))
 end
 
 -- **********************************************************

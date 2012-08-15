@@ -15,9 +15,9 @@ function cObjMaker:create( psSpriteFile, poSpriteData, paMap)
 	local oInstance
 	
 	-- validate 
-	if (psSpriteFile==nil) then error("no sprite file") end
-	if (poSpriteData==nil) then error("no sprite data") end
-	if (paMap==nil) then error("no character mapping") end
+	if (psSpriteFile==nil) then cDebug:throw("no sprite file") end
+	if (poSpriteData==nil) then cDebug:throw("no sprite data") end
+	if (paMap==nil) then cDebug:throw("no character mapping") end
 
 	-- create an instance and initialise
 	oInstance = cClass.createGroupInstance(self)

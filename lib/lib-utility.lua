@@ -203,6 +203,16 @@ function utility:ScaleToScreen(poObj, piScale)
 	end
 end
 
+--*******************************************************
+function utility.scaleWidth(poObj, piScreenScale)
+	local iTargetW, iScale
+	
+	iTargetW = utility.Screen.w * piScreenScale 
+	iScale = iTargetW/poObj.width
+	poObj:scale(iScale, iScale)
+	
+end
+
 -- **********************************************************
 function utility:moveToScreenCentre(poObj)
 
@@ -317,15 +327,15 @@ function utility.getSpriteSets(psImageFile, poSpriteData)
 	local oSpriteData, oSheet, aFrames, aSpriteSets, iItem, oItem
 	
 	-- basic validation
-	if (psImageFile==nil) then error("no image file") end
-	if (poSpriteData==nil) then error("no sprite data") end
+	if (psImageFile==nil) then cDebug:throw("no image file") end
+	if (poSpriteData==nil) then cDebug:throw("no sprite data") end
 
 	-- get the spritesheet
 	oSpriteData = poSpriteData.getSpriteSheetData() 
-	if (oSpriteData  == nil) then error ("no Spritesheetdata") end
+	if (oSpriteData  == nil) then cDebug:throw ("no Spritesheetdata") end
 	
 	oSheet = sprite.newSpriteSheetFromData( psImageFile, oSpriteData )
-	if (oSheet == nil) then error("bad spritesheet") end
+	if (oSheet == nil) then cDebug:throw("bad spritesheet") end
 	
 	-- build the spritesets
 	aFrames = oSpriteData.frames
@@ -405,6 +415,17 @@ function utility.var( pvValue, pvDefault)
 	else
 		return pvValue
 	end
+end
+
+--*******************************************************
+function utility.makeOverlay()
+	local oOverlay
+	
+	oOverlay = display.newRect(0, 0, 100, 100)
+	oOverlay:setFillColor(0, 0, 0)
+	oOverlay:setReferencePoint(display.CenterReferencePoint)
+	
+	return oOverlay
 end
 
 -- ####################################################

@@ -15,8 +15,7 @@ cLibEvents = {}
 --*******************************************************
 function cLibEvents.instrument(poObj)
 	if poObj["addListener"] then 
-		cDebug:print(DEBUG__ERROR,"table allready instrumented")
-		error ("cLibEvents: error")
+		cDebug:throw(DEBUG__ERROR,"table allready instrumented")
 	end
 	
 	poObj.addListener = cLibEvents.addListener
@@ -33,8 +32,7 @@ function cLibEvents.addListener(poObj,psEvent, poListener)
 	end
 	
 	if poObj.EventListeners[psEvent] ~= nil then
-		cDebug:print(DEBUG__ERROR,"listener exists for :", psEvent)
-		error ("cLibEvents: listener exists for ", psEvent)
+		cDebug:throw(DEBUG__ERROR,"listener exists for :", psEvent)
 	else
 		poObj.EventListeners[psEvent]  = poListener 
 	end
@@ -45,7 +43,7 @@ function cLibEvents.notify( poObj, poEvent)
 	local bSuccess, retval 
 	
 	if poEvent  == nil then 
-		error(".notify event called? - you meant :notify") 
+		cDebug:throw(".notify event called? - you meant :notify") 
 	end
 	
 	bSuccess, retval = pcall( poObj._notify, poObj, poEvent)
@@ -61,7 +59,10 @@ function cLibEvents._notify( poObj, poEvent)
 	local oListener, sEventNamSWSe, oCall
 	local bOk, oStatusOrMsg
 	
-	sEventName = poEvent["name"]
+	sEventName = poEvent.name
+	if sEventName == nil then
+		cDebug:throw( "no event name")
+	end
 	
 	if not poObj.EventListeners then 
 		cDebug:print(DEBUG__INFO, "no event listeners for ", sEventName)
@@ -77,8 +78,7 @@ function cLibEvents._notify( poObj, poEvent)
 			if bOk then
 				return oStatusOrMsg 
 			else
-				cDebug:print(DEBUG__INFO,"callback failed ", oStatusOrMsg) 
-				return
+				cDebug:throw("callback: ",sEventName, "failed with status", oStatusOrMsg) 
 			end
 		else
 			oCall = oListener[sEventName]
@@ -88,17 +88,11 @@ function cLibEvents._notify( poObj, poEvent)
 				if bOk then
 					return oStatusOrMsg 
 				else
-					cDebug:print(DEBUG__INFO,"callback failed", oStatusOrMsg) 
+					cDebug:throw("callback: ",sEventName, "failed with status", oStatusOrMsg) 
 					return
 				end
 			else
-				cDebug:print(DEBUG__ERROR,"CLibEvents: method not found on listener -", sEventName)
-				cDebug:print(DEBUG__DEBUG,"listener")
-				vardump(oListener)
-				cDebug:print(DEBUG__DEBUG,"self")
-				vardump(poObj)
-				
-				error("cLibEvents error")
+				cDebug:throw("CLibEvents: method not found on listener -", sEventName)
 			end
 		end
 	else
@@ -111,15 +105,13 @@ function cLibEvents.makeEventClosure( poListener, psEvent)
 	local fnClosure 
 	
 	if poListener == nil then
-		cDebug:print(DEBUG__ERROR, "makeEventClosure no listener specified")
-		error ("makeEventClosure error")
+		cDebug:throw(DEBUG__ERROR, "makeEventClosure no listener specified")
 	end
 	
 	fnClosure = function(poEvent)
 		local oCall = poListener[psEvent]
 		if oCall == nil then
-			cDebug:print(DEBUG__ERROR,"makeEventClosure no method found that corresponds to ", psEvent)
-			error ("makeEventClosure error")
+			cDebug:throw(DEBUG__ERROR,"makeEventClosure no method found that corresponds to ", psEvent)
 		end
 		return oCall(poListener, poEvent)
 	end

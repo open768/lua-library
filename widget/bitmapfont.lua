@@ -26,9 +26,9 @@ cBitmapFont = {
 function cBitmapFont:create(psSpriteFile, poSpriteData, paCharMapping)
 	local oInstance = cClass.createInstance(self)
 	
-	if (psSpriteFile==nil) then error("no sprite file") end
-	if (poSpriteData==nil) then error("no sprite data") end
-	if (paCharMapping==nil) then error("no character mapping") end
+	if (psSpriteFile==nil) then cDebug:throw ("no sprite file") end
+	if (poSpriteData==nil) then cDebug:throw ("no sprite data") end
+	if (paCharMapping==nil) then cDebug:throw ("no character mapping") end
 	
 	oInstance:init(psSpriteFile, poSpriteData, paCharMapping)
 	return oInstance 
@@ -40,10 +40,10 @@ function cBitmapFont:init(psSpriteFile, poSpriteData, paCharMapping)
 	
 	-- load the spritesheet
 	oSpriteData = poSpriteData.getSpriteSheetData() 
-	if (oSpriteData  == nil) then error ("no Spritesheetdata") end
+	if (oSpriteData  == nil) then cDebug:throw  ("no Spritesheetdata") end
 	
 	oSheet = sprite.newSpriteSheetFromData( psSpriteFile, oSpriteData )
-	if (oSheet == nil) then error("bad spritesheet") end
+	if (oSheet == nil) then cDebug:throw ("bad spritesheet") end
 	self.spriteSheet = oSheet
 
 	-- build a spriteset for each character
@@ -67,16 +67,16 @@ end
 function cBitmapFont:checkValidMapping(paCharMapping)
 	local oRow, sKey, oValue
 	
-	if type(paCharMapping) ~= "table" then error("not a table") end
+	if type(paCharMapping) ~= "table" then cDebug:throw("not a table") end
 	
 	for sKey,oValue in pairs(paCharMapping) do
-		if sKey == nil then error ("bad mapping - key missing") end
-		if oValue == nil then error ("bad mapping - mapping missing for "..sKey) end
+		if sKey == nil then cDebug:throw  ("bad mapping - key missing") end
+		if oValue == nil then cDebug:throw  ("bad mapping - mapping missing for "..sKey) end
 		
-		if oValue.ref == nil then error ("bad mapping - ref missing for "..sKey) end
-		if oValue.dx_pre == nil then error ("bad mapping - dx_pre missing for "..sKey) end
-		if oValue.dx_post == nil then error ("bad mapping - dx_post missing for "..sKey) end
-		if oValue.dy == nil then error ("bad mapping - dy missing for "..sKey) end
+		if oValue.ref == nil then cDebug:throw  ("bad mapping - ref missing for "..sKey) end
+		if oValue.dx_pre == nil then cDebug:throw  ("bad mapping - dx_pre missing for "..sKey) end
+		if oValue.dx_post == nil then cDebug:throw  ("bad mapping - dx_post missing for "..sKey) end
+		if oValue.dy == nil then cDebug:throw  ("bad mapping - dy missing for "..sKey) end
 	end
 end
 
@@ -85,7 +85,7 @@ function cBitmapFont:newText(psString)
 	local oGroup
 	local iX, iLen, iIndex, cCh, oSprite, oMap
 	
-	if type(psString) ~= 'string' then error ("not a string") end
+	if type(psString) ~= 'string' then cDebug:throw  ("not a string") end
 	
 	-- set up the parent group
 	oGroup = display.newGroup()

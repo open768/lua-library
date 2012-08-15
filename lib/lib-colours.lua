@@ -45,11 +45,11 @@ cColours =
 function cColours:getRGB(psColour) 
 	local sRGB, sR, sG, sB
 	
-	if psColour ==nil then error ("cColours:getRGB missing colour name") end
+	if psColour ==nil then cDebug:throw ("cColours:getRGB missing colour name") end
 	
 	sRGB = self[psColour]
 	if not sRGB then
-		error("no such colour : "..psColour); 
+		cDebug:throw("no such colour : "..psColour); 
 	end
 	
 	iR = hex_dec(sRGB:sub(1,2))

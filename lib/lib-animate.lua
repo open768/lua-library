@@ -54,6 +54,12 @@ function cAnimatorItem:create(poObj, paFinalState, poOptions)
 	return oInstance
 end
 
+function cAnimatorItem:purge()
+	if self.obj then
+		self.obj:removeSelf()
+		self.obj = nil
+	end
+end
 
 --########################################################
 --#
@@ -66,6 +72,7 @@ function cAnimator:create( )
 	
 	oInstance.commands = {}
 	oInstance.step = 0
+	oInstance.autopurge = false
 	
 	-- return the instance
 	return oInstance
@@ -74,12 +81,22 @@ end
 --*******************************************************
 function cAnimator:add( poObj, paFinalState, poOptions)
 	if (poOptions==nil) then
-		error ("cAnimator.add called instead of cAnimator:add")
+		cDebug:throw("cAnimator.add called instead of cAnimator:add")
 	end
 	if (poObj==nil) then
-		error ("cAnimator - attempt to add empty object")
+		cDebug:throw("cAnimator - attempt to add empty object")
 	end
+	if poOptions.time == nil then
+		cDebug:print(DEBUG__WARN,"cAnimator:add no time set - using default")
+	end
+	
 	table.insert(self.commands, cAnimatorItem:create(poObj, paFinalState, poOptions))
+end
+
+--*******************************************************
+function cAnimator:stop()
+	-- not sure this is a good idea 
+	-- as dont want to leave animation in unfinished state
 end
 
 --*******************************************************
@@ -87,7 +104,7 @@ function cAnimator:go()
 	local oItm, sState, sValue
 	
 	if self == nil then
-		error ("called cAnimator.go() instead of cAnimator:go()")
+		cDebug:throw ("called cAnimator.go() instead of cAnimator:go()")
 	end
 	
 	-- dont do anything if no commands
@@ -99,7 +116,7 @@ function cAnimator:go()
 	self.step=0
 	
 	-- do each step at a time
-	self:doStep(1)
+	self:prv_doStep(1)
 end
 
 --*******************************************************
@@ -107,7 +124,7 @@ function cAnimator:onComplete(poEvent)
 	if self.waitSFX and (not self.SFXEnded)  then
 		-- nothing doing wait for sound to complete
 	else
-		self:doStep(self.step)	
+		self:prv_doStep(self.step)	
 	end
 end
 
@@ -125,14 +142,27 @@ function cAnimator:onSFXEnd(poEvent)
 end
 
 --*******************************************************
-function cAnimator:doStep(piStep)
+function cAnimator:prv_notifyComplete()
+	local oItem
+
+	if self.autopurge then
+		cDebug:print(DEBUG__DEBUG,"cAnimator:purging") 
+		for _,oItem in pairs(self.commands) do
+			oItem:purge()
+		end
+	end
+	self.commands = nil		--clear out memory
+	self:notify({ name=self.eventName })
+end
+
+--*******************************************************
+function cAnimator:prv_doStep(piStep)
 	local oItem, fnCallBack, sKey, sValue, oEvent
 	
 	
 	-- if gone past the end of the array we've finished
 	if piStep > #(self.commands) then
-		self.commands = nil		--clear out memory
-		self:notify({ name=self.eventName })
+		self:prv_notifyComplete()
 		return
 	end
 	

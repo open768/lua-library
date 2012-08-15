@@ -35,7 +35,7 @@ function cSettings:get(psKey, psDefault)
 	local svalue 
 	
 	if psKey == nil then
-		error "Attempting to get with a nil key";
+		error "cSettings:Attempting to get with a nil key";
 	end
 	
 	svalue = self.data[psKey]
@@ -47,7 +47,7 @@ end
 --************************************************************************
 function cSettings:set(psKey, psValue)
 	if psKey == nil then
-		error "Attempting to set with a nil key";
+		error "cSettings:Attempting to set with a nil key";
 	end
 	if self.data[psKey]  ~= psValue then
 		self.data[psKey] = psValue

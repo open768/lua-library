@@ -47,7 +47,7 @@ end
 function cSpriteTumber:pause()
 	self.stopping = true
 	if self.timerID then
-		timer.cancel( self.timerId ) 
+		timer.cancel( self.timerID ) 
 	end
 	self:notify({name="onPause"})
 end

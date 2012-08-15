@@ -30,7 +30,7 @@ function cSoundPlayer:_playInSeq(piIndex)
 	local fnCallback
 	
 	if not self.files then
-		error("no Files to play")
+		cDebug:throw("no Files to play")
 	end
 	
 	if self.stopped then return end

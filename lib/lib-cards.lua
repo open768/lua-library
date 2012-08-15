@@ -20,79 +20,81 @@ require ("inc.lib.lib-events")
 require "inc.lib.lib-class"
 
 -- ####################################################################
--- # cardscene object
--- ####################################################################
-cDisplayCard = {
-	className="cDisplayCard",
-	name = nil,
-	view = nil,
-	purgeOnExit = false
-}
-
-function cDisplayCard:create( psName )
-	local oInstance = cClass.createInstance(self)
-	
-	cLibEvents.instrument(oInstance)
-	oInstance.name = psName
-	oInstance.view = nil
-	
-	return oInstance
-end
-
--- ####################################################################
 -- # cards object
 -- ####################################################################
 
 cCards = { 
 	history = {},
 	cards = {},
-	event={
-		enter = "enterScene",
-		exit= "exitScene",
-		destroy = "destroyScene"
-	}
 }
 
 --*******************************************************
 function cCards:getScene(psSceneName)
-	return self.cards[psSceneName]
-end
-
---*******************************************************
-function cCards:createScene(psSceneName)
-	cDebug:print(DEBUG__INFO, "creating scene:",psSceneName)
-	-- check whether the scene exists
-	if self:getScene(psSceneName)  then
-		error ("Scene with name :", psSceneName , " allready exists" )
+	local oScene
+	
+	oScene = self.cards[psSceneName]
+	if not oScene then
+		cDebug:print(DEBUG__WARN, " no such scene: ", psSceneName);
 	end
-	
-	-- create a scene object giving it an empty view and remember it in the cards table
-	local oScene = cDisplayCard:create(psSceneName)
-	self.cards[psSceneName] = oScene
-	
 	return oScene
 end
 
 --*******************************************************
+function cCards:createScene(psSceneName, poScene)
+	cDebug:print(DEBUG__DEBUG, "creating scene:",psSceneName)
+
+	if not psSceneName  then
+		cDebug:throw("cCards:createScene no scenename provided")
+	end
+	if not poScene  then
+		cDebug:throw("no scene provided for ", psSceneName)
+	end
+
+	-- check whether the scene exists
+	if self:getScene(psSceneName)  then
+		cDebug:throw("Scene with name :", psSceneName , " allready exists" )
+	end
+	
+	-- create a scene object
+	if not poScene.createScene then
+		cDebug:throw("Scene ", psSceneName, "doesnt define createScene")
+	end
+	if not poScene.createView then
+		cDebug:throw("Scene ", psSceneName, "doesnt define createView")
+	end
+	poScene.name = psSceneName
+	poScene.view= nil
+	poScene:createScene()
+	
+	-- remember it in the cards table
+	self.cards[psSceneName] = poScene
+end
+
+--*******************************************************
+--* remove the scenes view
 function cCards:purgeScene(psSceneName)
 	local oScene
 
-	cDebug:print(DEBUG__INFO, "purging scene: ",psSceneName)
+	cDebug:print(DEBUG__INFO, "** purging scene: ",psSceneName)
 	if (psSceneName == nil) then
-		error ("no scene name - perhaps you did a . instead of :")
+		cDebug:throw ("no scene name - perhaps you did a . instead of :")
 	end
 	
 	-- get the scene
 	oScene = self:getScene(psSceneName)
 	if oScene == nil  then
-		error ("no scene exists with name: ", psSceneName  )
+		cDebug:throw ("no scene exists with name: ", psSceneName  )
 	end
 	
 	-- call listener
-	oScene:notify({name=self.event.destroy})
+	if oScene.destroyScene then 
+		cDebug:print(DEBUG__DEBUG, "-- calling destroyScene:")
+		oScene:destroyScene()
+	end
 	
 	-- clean out the view
 	if oScene.view then
+		cDebug:print(DEBUG__DEBUG, "-- deleting view:")
 		oScene.view:removeSelf()
 		oScene.view = nil
 	end
@@ -109,7 +111,7 @@ function cCards:gotoScene(psSceneName, psEffect, piEffectTime)
 	-- get the new scene
 	oNewScene = self:getScene(psSceneName)
 	if oNewScene == nil  then
-		error ("no scene exists with name: ", psSceneName  )
+		cDebug:throw ("no scene exists with name: ", psSceneName  )
 	end
 	
 	-- hide the current scene
@@ -117,20 +119,10 @@ function cCards:gotoScene(psSceneName, psEffect, piEffectTime)
 	if sCurrent then
 		self:hideScene(sCurrent, psEffect, piEffectTime)
 	end
-
-	-- create the view if it doesnt exist
-	if oNewScene.view == nil then
-		cDebug:print(DEBUG__INFO, "creating view on scene:", psSceneName)
-		oNewScene.view  = display.newGroup()
-		oNewScene:createScene()
-	end
-	oNewScene.view.isVisible = true
 	
-	-- enter the scene
-	cDebug:print(DEBUG__INFO, "entering scene:", psSceneName)
-	oNewScene:notify({name=self.event.enter})
+	self:prv_enterScene(oNewScene)
 
-	-- last thing rermember the new scene name
+	-- last thing remember the new scene name
 	table.insert(self.history, psSceneName)
 end
 
@@ -138,12 +130,19 @@ end
 function cCards:hideScene(psSceneName, psEffect, piEffectTime)
 	local oScene
 	
-	cDebug:print(DEBUG__INFO, "hiding scene:", psSceneName)
+	cDebug:print(DEBUG__DEBUG, "hiding scene:", psSceneName)
 	
 	oScene= self:getScene(psSceneName)
 	if oScene then
-		oScene:notify({name=self.event.exit})
+		if oScene.exitScene then 
+			cDebug:print(DEBUG__DEBUG, "-- calling exitscene:", psSceneName)
+			oScene:exitScene()
+		end
 		oScene.view.isVisible = false	-- then hide
+		
+		if oScene.purgeOnExit then
+			self:purgeScene(psSceneName)
+		end 
 	end
 end
 
@@ -176,8 +175,25 @@ function cCards:goBack( psEffect, piEffectTime)
 		sLast = self:getCurrentSceneName()
 		cDebug:print(DEBUG__INFO, "entering scene:", sLast)
 		oScene = self:getScene(sLast)
-		oScene:notify({name=self.event.enter})
-		oScene.view.isVisible = true
+		self:prv_enterScene(oScene)
 	end
 end
+
+--*******************************************************
+function cCards:prv_enterScene( poScene)
+	cDebug:print(DEBUG__DEBUG, "cCards:prv_enterScene:", poScene.name)
+	if not poScene.view then
+		cDebug:print(DEBUG__DEBUG, "creating view on scene:", poScene.name)
+		poScene.view  = display.newGroup()
+		poScene:createView()
+	end
+	
+	if poScene.enterScene then 
+		cDebug:print(DEBUG__DEBUG, "-- calling EnterScene:")
+		poScene:enterScene()
+	end
+	
+	poScene.view.isVisible = true
+end
+
 
