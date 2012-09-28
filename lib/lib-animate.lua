@@ -87,7 +87,7 @@ function cAnimator:add( poObj, paFinalState, poOptions)
 		cDebug:throw("cAnimator - attempt to add empty object")
 	end
 	if poOptions.time == nil then
-		cDebug:print(DEBUG__WARN,"cAnimator:add no time set - using default")
+		cDebug:printOnce(DEBUG__WARN,"cAnimator:add no time set - using default")
 	end
 	
 	table.insert(self.commands, cAnimatorItem:create(poObj, paFinalState, poOptions))

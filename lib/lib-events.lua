@@ -5,9 +5,8 @@ Absolutely no warranties or guarantees given or implied - use at your own risk
 Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
 --]]
 require "inc.lib.lib-debug"
-require "inc.3lib.vardump"
 
-cLibEvents = {}
+cLibEvents = {timerDelay = 0}
 
 --*******************************************************
 --* call this method to add event listeners to a table 
@@ -15,47 +14,55 @@ cLibEvents = {}
 --*******************************************************
 function cLibEvents.instrument(poObj)
 	if poObj["addListener"] then 
-		cDebug:throw(DEBUG__ERROR,"table allready instrumented")
+		cDebug:throw("table allready instrumented")
 	end
 	
 	poObj.addListener = cLibEvents.addListener
 	poObj.notify = cLibEvents.notify
-	poObj._notify = cLibEvents._notify
+	poObj.prv__notify = cLibEvents.prv__notify
 end
 
 --*******************************************************
 -- only one listener per event! could do more
 --*******************************************************
 function cLibEvents.addListener(poObj,psEvent, poListener)
+	if type(psEvent) ~= "string" then
+		cDebug:throw("addListener: event not a string\n", psEvent)
+	end
+	
 	if not poObj.EventListeners then
 		poObj.EventListeners  = {}
 	end
 	
 	if poObj.EventListeners[psEvent] ~= nil then
-		cDebug:throw(DEBUG__ERROR,"listener exists for :", psEvent)
+		cDebug:throw("listener exists for :", psEvent)
 	else
 		poObj.EventListeners[psEvent]  = poListener 
 	end
 end
 
 --*******************************************************
+-- notify should be asynchronous
 function cLibEvents.notify( poObj, poEvent)
-	local bSuccess, retval 
+	local bSuccess, retval, fnPayload
 	
 	if poEvent  == nil then 
 		cDebug:throw(".notify event called? - you meant :notify") 
 	end
 	
-	bSuccess, retval = pcall( poObj._notify, poObj, poEvent)
-	if bSuccess then
-		return retval 
-	else
-		cDebug:print(DEBUG__ERROR,"notify failed:", poEvent.name,":", retval)
-	end
+	fnPayload = 
+		function ()
+			local bSuccess, retval
+			bSuccess, retval = pcall( poObj.prv__notify, poObj, poEvent)
+			if not bSuccess then
+				cDebug:print(DEBUG__ERROR,"notify failed:", poEvent.name,":", retval)
+			end
+		end
+	timer.performWithDelay( cLibEvents.timerDelay, fnPayload )
 end
 
 --*******************************************************
-function cLibEvents._notify( poObj, poEvent)
+function cLibEvents.prv__notify( poObj, poEvent)
 	local oListener, sEventNamSWSe, oCall
 	local bOk, oStatusOrMsg
 	
@@ -65,7 +72,7 @@ function cLibEvents._notify( poObj, poEvent)
 	end
 	
 	if not poObj.EventListeners then 
-		cDebug:print(DEBUG__INFO, "no event listeners for ", sEventName)
+		cDebug:print(DEBUG__WARN, "no event listeners at all! event was", sEventName)
 		return;
 	end
 	
@@ -97,6 +104,7 @@ function cLibEvents._notify( poObj, poEvent)
 		end
 	else
 		cDebug:print(DEBUG__WARN,"no Listener for event:",sEventName)
+		cDebug:print(DEBUG__EXTRA_DEBUG,"Listeners were: ",poObj.EventListeners)
 	end
 end
 
@@ -105,13 +113,13 @@ function cLibEvents.makeEventClosure( poListener, psEvent)
 	local fnClosure 
 	
 	if poListener == nil then
-		cDebug:throw(DEBUG__ERROR, "makeEventClosure no listener specified")
+		cDebug:throw("makeEventClosure no listener specified")
 	end
 	
 	fnClosure = function(poEvent)
 		local oCall = poListener[psEvent]
 		if oCall == nil then
-			cDebug:throw(DEBUG__ERROR,"makeEventClosure no method found that corresponds to ", psEvent)
+			cDebug:throw("makeEventClosure no method found that corresponds to ", psEvent)
 		end
 		return oCall(poListener, poEvent)
 	end

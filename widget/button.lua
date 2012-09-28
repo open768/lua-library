@@ -11,10 +11,16 @@ require ("inc.lib.lib-debug")
 cButtonWidget = { delay=150,  eventName = "onPress" }
 
 --*******************************************************
-function cButtonWidget:create( psSprite, piWidth, piHeight)
-	cDebug:print(DEBUG__DEBUG, "cButtonWidget:create");
-	
-	local oInstance = cToggleWidget:create(psSprite, piWidth, piHeight)
+function cButtonWidget:createHoriz( psSprite)
+	local oInstance = cToggleWidget:createHoriz(psSprite)
+	cClass.addParent(oInstance, cButtonWidget)
+	oInstance:addListener("onToggle", oInstance)
+	return oInstance 
+end
+
+--*******************************************************
+function cButtonWidget:create( psSprite)
+	local oInstance = cToggleWidget:create(psSprite)
 	cClass.addParent(oInstance, cButtonWidget)
 	oInstance:addListener("onToggle", oInstance)
 	return oInstance 

@@ -13,23 +13,43 @@ cToggleWidget = { group=nil, untoggledImg=nil, toggledImage=nil, paused=false, c
 cLibEvents.instrument(cToggleWidget)
 
 --*******************************************************
-function cToggleWidget:create( psSprite, piWidth, piHeight)
+function cToggleWidget:create( psSprite)
 	local oInstance 
 	oInstance  = cClass.createGroupInstance(self)
-	oInstance:init_toggle(psSprite, piWidth, piHeight)
+	oInstance:prv__init_toggle(psSprite, false)
 	
 	return oInstance 
 end
 
 --*******************************************************
-function cToggleWidget:init_toggle( psSprite, piWidth, piHeight)
-	local oOnImg, oOffImg, oSpriteGen, fnCallback
+function cToggleWidget:createHoriz( psSprite)
+	local oInstance 
+	oInstance  = cClass.createGroupInstance(self)
+	oInstance:prv__init_toggle(psSprite, true)
 	
-	if piWidth==nil then
-		oSpriteGen = cSpriteGenerator:create(psSprite.img, psSprite.w, psSprite.h,2)
+	return oInstance 
+end
+
+--*******************************************************
+function cToggleWidget:prv__init_toggle( psSprite, pbIsHoriz)
+	local oOnImg, oOffImg, oSpriteGen, fnCallback, tmpImage, oImg
+	local oImg, iW, iH
+	
+	-- determine width and height
+	oImg = display.newImage(psSprite)
+	if pbIsHoriz then
+		iW = oImg.width/2
+		iH = oImg.height
 	else
-		oSpriteGen = cSpriteGenerator:create(psSprite, piWidth, piHeight,2)
+		iW = oImg.width
+		iH = oImg.height/2
 	end
+	
+	oImg:removeSelf()
+	oImg = nil
+	
+	
+	oSpriteGen = cSpriteGenerator:create(psSprite, iW, iH,2)
 	self.untoggledImg = oSpriteGen:getSprite(1)
 	self.toggledImage = oSpriteGen:getSprite(2)
 	self.toggledImage.isVisible = false

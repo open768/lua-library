@@ -40,13 +40,13 @@ function cWidgetDecorator:prv__init(paOptions)
 	-- validate options
 	self.backColour = paOptions.backColour 
 	self.widget = paOptions.widget
-	self.padding = utility.var( paOptions.padding, 0)
-	self.cornerRadius = utility.var( paOptions.cornerRadius, 0)
-	self.borderWidth = utility.var( paOptions.borderWidth, 0)
-	self.borderInset = utility.var( paOptions.borderInset, 0)
-	self.bgAlpha = utility.var( paOptions.alpha, 1.0)
-	self.bgWidth = utility.var( paOptions.width, self.widget.width + self.padding *2)
-	self.bgHeight = utility.var( paOptions.height, self.widget.height + self.padding *2)
+	self.padding = utility.defaultValue( paOptions.padding, 0)
+	self.cornerRadius = utility.defaultValue( paOptions.cornerRadius, 0)
+	self.borderWidth = utility.defaultValue( paOptions.borderWidth, 0)
+	self.borderInset = utility.defaultValue( paOptions.borderInset, 0)
+	self.bgAlpha = utility.defaultValue( paOptions.alpha, 1.0)
+	self.bgWidth = utility.defaultValue( paOptions.width, self.widget.width + self.padding *2)
+	self.bgHeight = utility.defaultValue( paOptions.height, self.widget.height + self.padding *2)
 	
 	if self.borderWidth >0 then
 		if not paOptions.borderColour then error "decorator: no borderColour" end

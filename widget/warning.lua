@@ -17,23 +17,38 @@ cWarning = {
 	onClosedEvent = "onWarningClosed",
 	bgTime=400,
 	signTime=400,
-	closeText = "tap anywhere to close"
+	closeText = "tap anywhere to close",
+	sound = "audio/traffic/caroops.mp3"
 }
 cLibEvents.instrument(cWarning)
 
 --*******************************************************
-function cWarning:create()
+function cWarning:show(psMsg, psEvent, poListener)
+	local oWarning
+	
+	cDebug:print(DEBUG__DEBUG, "showing warning: ", psMsg)
+
+	oWarning = cWarning:prv_create()
+	if psEvent ~= nil then
+		oWarning.onClosedEvent = psEvent
+		oWarning:addListener(psEvent, poListener)
+	end
+	oWarning:prv__warn(psMsg)
+end
+
+--*******************************************************
+function cWarning:prv_create()
 	return  cClass.createGroupInstance(self)	
 end
 
 --*******************************************************
-function cWarning:warn(psText)
+function cWarning:prv__warn(psText)
 	self.objects = {}
-	self:prv_init(psText)
+	self:prv__init(psText)
 end
 
 --*******************************************************
-function cWarning:prv_init(psText)
+function cWarning:prv__init(psText)
 	local oSignGrp, oSign, oText, oOverlay, iWidth, oAnim, oCaption
 	
 	oSignGrp = display.newGroup()
@@ -79,7 +94,7 @@ function cWarning:prv_init(psText)
 
 	oAnim:add( self.objects.overlay, {alpha=0, x=utility.Screen.Centre.x, y= utility.Screen.Centre.y}, {isSetup=true})
 	oAnim:add( self.objects.sign, {x=utility.Screen.Centre.x, y= utility.Screen.h + self.objects.sign.contentHeight}, {isSetup=true})
-	oAnim:add( self.objects.overlay, {alpha=0.6, width=utility.Screen.w, height=utility.Screen.h, time=self.bgTime}, {wait=true})
+	oAnim:add( self.objects.overlay, {alpha=0.6, width=utility.Screen.w, height=utility.Screen.h, time=self.bgTime}, {wait=true, sfx=self.sound})
 	oAnim:add( self.objects.sign, { y=utility.Screen.Centre.y, time=self.signTime}, {wait=true})
 	
 	-- run the anim

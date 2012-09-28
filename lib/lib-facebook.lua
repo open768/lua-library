@@ -30,7 +30,8 @@ local FB_IS_AUTHORISED_KEY = "fbiak"
 	loggedIn = false,
 	fnClosure = nil,
 	simulate_error = false,
-	sim_bool_return = false
+	sim_bool_return = false,
+	min_time = 100, max_time = 200
 }
 cLibEvents.instrument(cFacebook)
 
@@ -38,15 +39,17 @@ cLibEvents.instrument(cFacebook)
  --#
  --#################################################################
 function cFacebook:login(psAppID)
-	local oEvent = {}
+	local oEvent
 	
 	if utility.isSimulator() then
 		cDebug:print(DEBUG__WARN, "cFacebook simulating login")
-		oEvent.name = "onFBEvent"
-		oEvent.type = "session"
-		oEvent.phase = "login"
-		oEvent.token = "testtokentesttokentesttokentesttoken"
-		oEvent.expiration = "test"
+		oEvent = {
+			name = "onFBEvent",
+			type = "session",
+			phase = "login",
+			token = "testtokentesttokentesttokentesttoken",
+			expiration = "test"
+		}
 		self:prv__onSimulatedFBEvent(oEvent)
 		return
 	end
@@ -203,7 +206,7 @@ end
 function cFacebook:prv__onSimulatedFBEvent(poEvent)
 	local fnClosure, iRnd
 	
-	iRnd = math.random(400,900)
+	iRnd = math.random(self.min_time,self.max_time)
 	cDebug:print(DEBUG__DEBUG, "cFacebook:onSimulatedFBEvent - ", iRnd, "delay")
 	fnClosure = function() self:onFBEvent(poEvent) end
 	timer.performWithDelay(iRnd, fnClosure)
@@ -222,7 +225,7 @@ function cFacebook:prv__onFBLogin(poEvent)
 		self.loggedIn = true
 		poEvent.name = self.loginEventName
 		
-		--login can be ok, without permissions - go and check permissions
+		--login can be ok, without permissions - remember to check permissions next
 	elseif poEvent.phase == "logout" then
 		cDebug:print(DEBUG__INFO, "cFacebook: logged out")
 		self.loggedIn = false

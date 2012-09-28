@@ -42,13 +42,10 @@ cInnerActive = {
 	forceUserAgent = "Mozilla/5.0 (Linux; U; Android 1.5; en-us; ADR6200 Build/CUPCAKE) AppleWebKit/528.5+ (KHTML, like Gecko) Version/3.1.2 Mobile Safari/525.20.1",
 	version = "Sm2m-1.5.3"
 }
-cSettings:load()
 cLibEvents.instrument(cInnerActive)
 
 -- *********************************************************
 function cInnerActive:showFullScreenAd(psAid, poGroup)
-	cDebug.DEBUG_LEVEL=DEBUG__INFO
- 
 	if poGroup then	self.adGroup = poGroup end
 	self:getFullScreenAd(psAid, poGroup)
 end
@@ -102,12 +99,17 @@ function cInnerActive:_buildUrl( poArgs )
 end
 
 -- *********************************************************
-function cInnerActive:_fetchAd(psUrl)
+function cInnerActive:prv__fetchAd(psUrl)
 	local sXML, oXML, oNode, oData
 	
 	-- get the data
 	cHttp.forceUserAgent = self.forceUserAgent
 	sXML = cHttp:get(psUrl)
+	if sXML == nil then
+		cDebug:print(DEBUG__ERROR, "no ad returned")
+		return nil
+	end
+	
 	
 	--turn the response into something useful
 	oXML = XmlParser:ParseXmlText(sXML)
@@ -152,12 +154,13 @@ function cInnerActive:getFullScreenAd()
 	--build the URL
 	cDebug:print(DEBUG__INFO, "about to get ad")
 	sUrl = self:_buildUrl( {w=iw, h=ih, fullScreen=true})
-	self.adData = self:_fetchAd(sUrl)
-	
-	-- load the ad image
-	cDebug:print(DEBUG__INFO, "about to load image")
-	pFnCallback = cLibEvents.makeEventClosure(self, "onLoadRemoteImage")
-	display.loadRemoteImage( self.adData.imageUrl, "GET", pFnCallback, self.remoteImageFile )
+	self.adData = self:prv__fetchAd(sUrl)
+	if self.adData then
+		-- load the ad image
+		cDebug:print(DEBUG__INFO, "about to load image")
+		pFnCallback = cLibEvents.makeEventClosure(self, "onLoadRemoteImage")
+		display.loadRemoteImage( self.adData.imageUrl, "GET", pFnCallback, self.remoteImageFile )
+	end
 end
 
 -- *********************************************************

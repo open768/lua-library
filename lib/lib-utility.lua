@@ -55,6 +55,183 @@ function utility.randomGotoEffect()
 end
 
 -- **********************************************************
+-- only checks square rectangles, ignores rotation
+-- doesnt use objects for speed
+-- **********************************************************
+function utility:isOffScreen(poObj)
+	local zX1,zY1,zX2,zY2
+	
+	-- zone of screen area
+	zX1 = self.Screen.x-poObj.width
+	zY1 = self.Screen.y-poObj.height
+	zX2 = self.Screen.x + self.Screen.w 
+	zY2 = self.Screen.y + self.Screen.h 
+	
+	-- logic
+	return not utility.pointInRect(poObj.x, poObj.y, zX1,zY1, zX2,zY2)
+end
+
+-- **********************************************************
+-- only checks square rectangles, ignores rotation
+-- doesnt use objects for speed
+-- **********************************************************
+function utility.pointInRect(pix,piy, pix1,piy1, pix2, piy2)
+	return ((pix>pix1) and (pix<pix2) and (piy>piy1) and (piy<piy2))
+end
+
+-- *********************************************************
+function utility.isSimulator()
+	if globals.isSimulator == nil then
+		globals.isSimulator =(system.getInfo("environment") == "simulator")
+	end
+	return globals.isSimulator 
+end
+
+-- *********************************************************
+function utility:captureStdout(psfilename)
+	-- adapted from http://developer.anscamobile.com/reference/index/iooutput
+	local oHandle = io.output()    -- save current file handle
+	local path = system.pathForFile( psfilename, system.DocumentsDirectory  )
+	io.output( path )
+	oHandle:close()
+end
+
+--*******************************************************
+function utility.getAngle(piX, piY)
+	local iRadians, iDegrees
+
+	iRadians = math.atan2( piX, piY)
+    iDegrees = (iRadians * 180 / math.pi)  + 180
+	if iDegrees > 360 then iDegrees = iDegrees - 360 end
+	
+	return iDegrees 
+end
+
+--*******************************************************
+function utility.isValidFont(psFontName)
+	local sPath,bOK = false
+	
+	if psFontName then 
+		if utility.isNativeFont(self.options.font) then
+			bOK = true
+		else
+			--does the file exist
+			sPath = system.pathForFile(psFontName, system.ResourceDirectory)
+			if utility.fileExists(sPath) then
+				bOK = true
+			else
+				cDebug:print(DEBUG__ERROR, "font doesnt exist:",  psFontName)
+			end
+		end
+	else
+		cDebug:print(DEBUG__WARN, "isValidFont: no font name supplied:")
+	end
+	
+	return bOk
+end
+
+--*******************************************************
+function utility.fileExists(psFilename)
+	return (lfs.attributes(psFilename, "dev") ~= nil)
+end 
+
+
+-- ####################################################
+-- # GRaphics
+-- ####################################################
+function utility.removeChildren(poGroup)
+	while poGroup.numChildren >0 do
+		poGroup[1]:removeSelf()
+	end
+end
+
+--*******************************************************
+function utility.makeOverlay()
+	local oOverlay
+	
+	oOverlay = display.newRect(0, 0, 100, 100)
+	oOverlay:setFillColor(0, 0, 0)
+	oOverlay:setReferencePoint(display.CenterReferencePoint)
+	
+	return oOverlay
+end
+
+--*******************************************************
+function utility.getSpriteSets(psImageFile, poSpriteData)
+	local oSpriteData, oSheet, aFrames, aSpriteSets, iItem, oItem
+	
+	-- basic validation
+	if (psImageFile==nil) then cDebug:throw("no image file") end
+	if (poSpriteData==nil) then cDebug:throw("no sprite data") end
+
+	-- get the spritesheet
+	oSpriteData = poSpriteData.getSpriteSheetData() 
+	if (oSpriteData  == nil) then cDebug:throw ("no Spritesheetdata") end
+	
+	oSheet = sprite.newSpriteSheetFromData( psImageFile, oSpriteData )
+	if (oSheet == nil) then cDebug:throw("bad spritesheet") end
+	
+	-- build the spritesets
+	aFrames = oSpriteData.frames
+	aSpriteSets = {}
+	for iItem=1,#aFrames do
+		oItem = aFrames[iItem]
+		aSpriteSets[oItem.name] =  sprite.newSpriteSet(oSheet,iItem,1)
+	end
+	
+	return aSpriteSets
+end
+
+-- **********************************************************
+function utility:FitToScreen(poObj, piScale)
+	local iScale
+	
+	if not piScale then piScale=1.0 end
+	
+	-- scale to display
+	iScale = math.min(
+		self.Screen.w * piScale/ poObj.contentWidth,
+		self.Screen.h * piScale/ poObj.contentHeight)
+		
+	if iScale >1 then
+		poObj:scale(iScale, iScale)
+	end
+end
+
+-- **********************************************************
+function utility:ScaleToScreen(poObj, piScale)
+	local iScale
+	
+	if not piScale then piScale=1.0 end
+	
+	-- scale to display
+	iScale = math.max(
+		self.Screen.w * piScale/ poObj.contentWidth,
+		self.Screen.h * piScale/ poObj.contentHeight)
+		
+	if iScale >1 then
+		poObj:scale(iScale, iScale)
+	end
+end
+
+--*******************************************************
+function utility.scaleWidth(poObj, piScreenScale)
+	local iTargetW, iScale
+	
+	iTargetW = utility.Screen.w * piScreenScale 
+	iScale = iTargetW/poObj.width
+	poObj:scale(iScale, iScale)
+	
+end
+
+-- **********************************************************
+function utility:moveToScreenCentre(poObj)
+	poObj:setReferencePoint(display.CenterReferencePoint)
+	poObj.x = self.Screen.Centre.x 
+	poObj.y = self.Screen.Centre.y 
+end
+
+-- **********************************************************
 -- make a zone 
 -- cant make a concave shape as this confuses the physics engine
 -- so has to be broken into a group
@@ -154,82 +331,79 @@ function utility.NewRect(piX, piY, piW, piH)
 	return display.newRect(x,y,w,h)
 end
 
--- **********************************************************
--- only checks square rectangles, ignores rotation
--- doesnt use objects for speed
--- **********************************************************
-function utility:isOffScreen(poObj)
-	local zX1,zY1,zX2,zY2
-	
-	-- zone of screen area
-	zX1 = self.Screen.x-poObj.width
-	zY1 = self.Screen.y-poObj.height
-	zX2 = self.Screen.x + self.Screen.w 
-	zY2 = self.Screen.y + self.Screen.h 
-	
-	-- logic
-	return not utility.pointInRect(poObj.x, poObj.y, zX1,zY1, zX2,zY2)
+-- ####################################################
+-- # TABLES
+-- ####################################################
+function utility:getRandomItem(paArray)
+	return paArray[math.random( #paArray)]
 end
 
--- **********************************************************
-function utility:FitToScreen(poObj, piScale)
-	local iScale
-	
-	if not piScale then piScale=1.0 end
-	
-	-- scale to display
-	iScale = math.min(
-		self.Screen.w * piScale/ poObj.contentWidth,
-		self.Screen.h * piScale/ poObj.contentHeight)
-		
-	if iScale >1 then
-		poObj:scale(iScale, iScale)
-	end
+-- ####################################################
+-- # STRINGS
+-- ####################################################
+function utility.FindNoCase(psStr, psWhat)
+	return string.find( string.lower(psStr), string.lower(psWhat),1)
 end
 
--- **********************************************************
-function utility:ScaleToScreen(poObj, piScale)
-	local iScale
-	
-	if not piScale then piScale=1.0 end
-	
-	-- scale to display
-	iScale = math.max(
-		self.Screen.w * piScale/ poObj.contentWidth,
-		self.Screen.h * piScale/ poObj.contentHeight)
-		
-	if iScale >1 then
-		poObj:scale(iScale, iScale)
+function utility.defaultValue( pa, pDefault)
+	if pa == nil then 
+		return pDefault
+	else
+		return pa
 	end
 end
 
 --*******************************************************
-function utility.scaleWidth(poObj, piScreenScale)
-	local iTargetW, iScale
+function utility.extract(psStr, psStart, psEnd)
+	local aStart, aEnd, sExtract
+	local aStart = {}
+	local aEnd={}
 	
-	iTargetW = utility.Screen.w * piScreenScale 
-	iScale = iTargetW/poObj.width
-	poObj:scale(iScale, iScale)
-	
+	aStart[1],aStart[2] = psStr:find(psStart) 
+	aEnd[1],aEnd[2] = psStr:find(psEnd) 
+	return psStr:sub( aStart[2]+1, aEnd[1]-1)
 end
 
--- **********************************************************
-function utility:moveToScreenCentre(poObj)
+--*******************************************************
+function utility.splitString(psString)
+	local aStrings = {}
+	cDebug:print(DEBUG__EXTRA_DEBUG, " splitting text: ", psString)
+	utility.prv__splitString(aStrings,psString)
+	return aStrings
+end
 
-	poObj:setReferencePoint(display.CenterReferencePoint)
-	poObj.x = self.Screen.Centre.x 
-	poObj.y = self.Screen.Centre.y 
+--*******************************************************
+function utility.prv__splitString(paArray, psString)
+	local iPos, sL, sR
 	
+	iPos = psString:find("[%s;:,-%.]")
+	if iPos == nil then
+		table.insert(paArray, psString)
+	else
+		sL = psString:sub(1,iPos)
+		sR = psString:sub(iPos+1)
+		cDebug:print(DEBUG__EXTRA_DEBUG, " -- ", "LHS=", sL, " RHS=", sR)
+
+		table.insert(paArray, sL)
+		utility.prv__splitString(paArray, sR)
+	end
 end
 
--- **********************************************************
--- only checks square rectangles, ignores rotation
--- doesnt use objects for speed
--- **********************************************************
-function utility.pointInRect(pix,piy, pix1,piy1, pix2, piy2)
-	return ((pix>pix1) and (pix<pix2) and (piy>piy1) and (piy<piy2))
+
+-- ####################################################
+-- # globals class methods
+-- ####################################################
+function globals:set(psKey, poThing)
+	self[psKey] = poThing
 end
 
+function globals:get(psKey)
+	return self[psKey]
+end
+
+-- ####################################################
+-- JSON
+-- ####################################################
 -- *********************************************************
 -- adapted from 
 -- http://blog.anscamobile.com/2011/08/tutorial-exploring-json-usage-in-corona/
@@ -279,155 +453,6 @@ end
 	end
 end
 
-
-
--- *********************************************************
-function utility.isSimulator()
-	return (system.getInfo("environment") == "simulator")
-end
-
--- *********************************************************
-function utility:captureStdout(psfilename)
-	-- adapted from http://developer.anscamobile.com/reference/index/iooutput
-	local oHandle = io.output()    -- save current file handle
-	local path = system.pathForFile( psfilename, system.DocumentsDirectory  )
-	io.output( path )
-	oHandle:close()
-end
-
---*******************************************************
-function utility:getRandomItem(paArray)
-	return paArray[math.random( #paArray)]
-end
-
---*******************************************************
-function utility.getAngle(piX, piY)
-	local iRadians, iDegrees
-
-	iRadians = math.atan2( piX, piY)
-    iDegrees = (iRadians * 180 / math.pi)  + 180
-	if iDegrees > 360 then iDegrees = iDegrees - 360 end
-	
-	return iDegrees 
-end
-
---*******************************************************
-function utility.extract(psStr, psStart, psEnd)
-	local aStart, aEnd, sExtract
-	local aStart = {}
-	local aEnd={}
-	
-	aStart[1],aStart[2] = psStr:find(psStart) 
-	aEnd[1],aEnd[2] = psStr:find(psEnd) 
-	return psStr:sub( aStart[2]+1, aEnd[1]-1)
-end
-
---*******************************************************
-function utility.getSpriteSets(psImageFile, poSpriteData)
-	local oSpriteData, oSheet, aFrames, aSpriteSets, iItem, oItem
-	
-	-- basic validation
-	if (psImageFile==nil) then cDebug:throw("no image file") end
-	if (poSpriteData==nil) then cDebug:throw("no sprite data") end
-
-	-- get the spritesheet
-	oSpriteData = poSpriteData.getSpriteSheetData() 
-	if (oSpriteData  == nil) then cDebug:throw ("no Spritesheetdata") end
-	
-	oSheet = sprite.newSpriteSheetFromData( psImageFile, oSpriteData )
-	if (oSheet == nil) then cDebug:throw("bad spritesheet") end
-	
-	-- build the spritesets
-	aFrames = oSpriteData.frames
-	aSpriteSets = {}
-	for iItem=1,#aFrames do
-		oItem = aFrames[iItem]
-		aSpriteSets[oItem.name] =  sprite.newSpriteSet(oSheet,iItem,1)
-	end
-	
-	return aSpriteSets
-end
-
---*******************************************************
-function utility.isValidFont(psFontName)
-	local sPath,bOK = false
-	
-	if psFontName then 
-		if utility.isNativeFont(self.options.font) then
-			bOK = true
-		else
-			--does the file exist
-			sPath = system.pathForFile(psFontName, system.ResourceDirectory)
-			if utility.fileExists(sPath) then
-				bOK = true
-			else
-				cDebug:print(DEBUG__ERROR, "font doesnt exist:",  psFontName)
-			end
-		end
-	else
-		cDebug:print(DEBUG__WARN, "isValidFont: no font name supplied:")
-	end
-	
-	return bOk
-end
-
---*******************************************************
-function utility.fileExists(psFilename)
-	return (lfs.attributes(psFilename, "dev") ~= nil)
-end 
-
---*******************************************************
-function utility.removeChildren(poGroup)
-	while poGroup.numChildren >0 do
-		poGroup[1]:removeSelf()
-	end
-end
-
---*******************************************************
-function utility.splitString(psString)
-	local aStrings = {}
-	cDebug:print(DEBUG__EXTRA_DEBUG, " splitting text: ", psString)
-	utility.prv__splitString(aStrings,psString)
-	return aStrings
-end
-
---*******************************************************
-function utility.prv__splitString(paArray, psString)
-	local iPos, sL, sR
-	
-	iPos = psString:find("[%s;:,-%.]")
-	if iPos == nil then
-		table.insert(paArray, psString)
-	else
-		sL = psString:sub(1,iPos)
-		sR = psString:sub(iPos+1)
-		cDebug:print(DEBUG__EXTRA_DEBUG, " -- ", "LHS=", sL, " RHS=", sR)
-
-		table.insert(paArray, sL)
-		utility.prv__splitString(paArray, sR)
-	end
-end
-
---*******************************************************
-function utility.var( pvValue, pvDefault)
-	if pvValue==nil then
-		return pvDefault
-	else
-		return pvValue
-	end
-end
-
---*******************************************************
-function utility.makeOverlay()
-	local oOverlay
-	
-	oOverlay = display.newRect(0, 0, 100, 100)
-	oOverlay:setFillColor(0, 0, 0)
-	oOverlay:setReferencePoint(display.CenterReferencePoint)
-	
-	return oOverlay
-end
-
 -- ####################################################
 -- # global event listeners
 -- ####################################################
@@ -446,20 +471,8 @@ Runtime:addEventListener( "orientation", onRotation )
 local function onAccelerometer( poEvent )
    physics.setGravity( utility.GravityStrength * poEvent.xGravity, -utility.GravityStrength * poEvent.yGravity )
 end
---TODO check device has capabilities
 if not utility.isSimulator() then
 	Runtime:addEventListener( "accelerometer", onAccelerometer )
-end
-
--- ####################################################
--- # globals class methods
--- ####################################################
-function globals:set(psKey, poThing)
-	self[psKey] = poThing
-end
-
-function globals:get(psKey)
-	return self[psKey]
 end
 
 -- ####################################################

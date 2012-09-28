@@ -11,13 +11,11 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 	the bug is that scenes that have graphical objects that are 
 	partly off screen cause the scene to be moved when it is restored.
 	which is pants
-	
-	STAGE 1 - create a wrapper for storyboard --- DONE
-	STAGE 2 - replace the content of the wrapped functions
 ]]--
 
 require ("inc.lib.lib-events")
 require "inc.lib.lib-class"
+require "analytics"
 
 -- ####################################################################
 -- # cards object
@@ -34,40 +32,43 @@ function cCards:getScene(psSceneName)
 	
 	oScene = self.cards[psSceneName]
 	if not oScene then
-		cDebug:print(DEBUG__WARN, " no such scene: ", psSceneName);
+		cDebug:print(DEBUG__DEBUG, " no such scene: ", psSceneName);
 	end
 	return oScene
 end
 
 --*******************************************************
-function cCards:createScene(psSceneName, poScene)
-	cDebug:print(DEBUG__DEBUG, "creating scene:",psSceneName)
-
-	if not psSceneName  then
-		cDebug:throw("cCards:createScene no scenename provided")
-	end
+function cCards:createScene(poScene)
+	local sSceneName
+	
 	if not poScene  then
-		cDebug:throw("no scene provided for ", psSceneName)
+		cDebug:throw("no scene provided for ")
+	end
+	
+	sSceneName = poScene.sceneName  
+	if (sSceneName == nil) then
+		cDebug:throw("cCards:no sceneName property for scene:", poScene )
 	end
 
-	-- check whether the scene exists
-	if self:getScene(psSceneName)  then
-		cDebug:throw("Scene with name :", psSceneName , " allready exists" )
+	cDebug:print(DEBUG__DEBUG, "creating scene:",sSceneName)
+	
+-- check whether the scene exists
+	if self:getScene(sSceneName )  then
+		cDebug:throw("Scene with name :", sSceneName  , " allready exists" )
 	end
 	
 	-- create a scene object
 	if not poScene.createScene then
-		cDebug:throw("Scene ", psSceneName, "doesnt define createScene")
+		cDebug:throw("Scene ", sSceneName , "doesnt define createScene")
 	end
 	if not poScene.createView then
-		cDebug:throw("Scene ", psSceneName, "doesnt define createView")
+		cDebug:throw("Scene ", sSceneName , "doesnt define createView")
 	end
-	poScene.name = psSceneName
 	poScene.view= nil
 	poScene:createScene()
 	
 	-- remember it in the cards table
-	self.cards[psSceneName] = poScene
+	self.cards[sSceneName] = poScene
 end
 
 --*******************************************************
@@ -148,7 +149,7 @@ end
 
 --*******************************************************
 function cCards:getCurrentSceneName()
-	local iLen, sSceneName
+	local iLen
 	
 	iLen = #(self.history)
 	if iLen > 0 then
@@ -181,9 +182,11 @@ end
 
 --*******************************************************
 function cCards:prv_enterScene( poScene)
-	cDebug:print(DEBUG__DEBUG, "cCards:prv_enterScene:", poScene.name)
+	cDebug:print(DEBUG__DEBUG, "cCards:prv_enterScene:", poScene.sceneName)
+	analytics.logEvent("Scene: "..poScene.sceneName)
+	
 	if not poScene.view then
-		cDebug:print(DEBUG__DEBUG, "creating view on scene:", poScene.name)
+		cDebug:print(DEBUG__DEBUG, "creating view on scene:", poScene.sceneName)
 		poScene.view  = display.newGroup()
 		poScene:createView()
 	end

@@ -54,7 +54,7 @@ function cClass.addParent( poObj, poParent)
 	for sName,vValue in pairs(poParent) do
 		--if (type(vValue) == 'function') then
 		if poObj[sName] then
-			cDebug:print(DEBUG__WARN, "addParent: " , poObj.className, ".", sName , " exists - skipping")
+			cDebug:print(DEBUG__DEBUG, "addParent: " , poObj.className, ".", sName , " exists - skipping")
 		else
 			--cDebug:print(DEBUG__DEBUG, "cClass adding ", sName);
 			poObj[sName] = vValue

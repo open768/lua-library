@@ -17,7 +17,7 @@ cHttp = {
 	testMode = false,
 	userAgents={
 		["Mac OS X"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5",
-		Win = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.162 Safari/535.19",
+		Win = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.52 Safari/536.5",
 		["iPhone OS"] = "Mozilla/5.0 (iPod; U; CPU iPhone OS 4_3_3 like Mac OS X) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5"
 	},
 	forceUserAgent = nil,
@@ -39,33 +39,41 @@ end
 function cHttp:checkConnectivity()
 	local oResponse = http.request("http://"..self.reachableDomain.."/")
 	self.isNetReachable = (oResponse ~= nil)
+	cDebug:print(DEBUG__INFO, "cHttp: checkConnectivity Net is reachable: ", self.isNetReachable)
+	
 	return self.isNetReachable
 end
 
 -- **********************************************************
 function cHttp:get(psUrl)
-	local oResponse, oSink, sUserAgent
-	local rCode,rCount,rHeaders
+	local oResponse, oSink
+	local rCode,rCount,rHeaders, iLen
 	
 	if not psUrl then
-		error ("cHttp:get -- No Url")
+		cDebug:throw("cHttp:get -- No Url")
 	end
 	cDebug:print(DEBUG__INFO, "cHttp: URL:", psUrl)
 	
-	sUserAgent = self:getUserAgent()
 	oSink = {}
-	rCode,rCount,rHeaders = http.request	{
+	rCode,rCount,rHeaders = http.request	({
 		url=psUrl,
 		sink=ltn12.sink.table(oSink),
 		headers={
 			Accept="text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 			["Accept-Language"] = "en-GB,en-US;q=0.8,en;q=0.6"
 		},
-		userAgent=sUserAgent
-	}
+		userAgent=self:getUserAgent()
+	})
 	sResponse = table.concat(oSink)
-	cDebug:print(DEBUG__INFO, "cHttp: response=",sResponse)
+	cDebug:print(DEBUG__DEBUG, "cHttp: response=",sResponse)
+	cDebug:print(DEBUG__DEBUG, "cHttp: headers=",rHeaders)
+	cDebug:print(DEBUG__DEBUG, "cHttp: code=",rCode)
 	
+	iLen = rHeaders["content-length"] + 0
+	if iLen == 0 then
+		cDebug:print(DEBUG__ERROR, "no data returned")
+		sResponse = nil
+	end
 	return sResponse
 end
 
@@ -95,6 +103,8 @@ end
 -- **********************************************************
 function cHttp:netWorkListener(poEvent)
 	self.sNetReachable = poEvent.isReachable
+	vardump(poEvent)
+	print ("network is reachable "..poEvent.isReachable)
 end
 
 -- **********************************************************

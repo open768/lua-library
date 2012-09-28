@@ -86,7 +86,7 @@ function cAds:resume()
 end
 
 -- *********************************************************
-function cAds:ShouldIDoFullScreenAd()
+function cAds:yesNoFullScreenAd()
 	self.adEvents = self.adEvents  + 1
 	if self.adEvents >= self.adEventThreshold then
 		self.adEvents  = 0

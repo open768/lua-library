@@ -11,20 +11,20 @@ cSpriteGenerator = {className="cSpriteGenerator"}
 
 
 --*******************************************************
-function cSpriteGenerator:create(psImageFile, piWidth, piHeight, piMaxSprites)
+function cSpriteGenerator:create(psImageFile, piSpriteWidth, piSpriteHeight, piMaxSprites)
 	-- arcane lua instance creation 
 	local oInstance = cClass.createInstance(self)
 	
 	oInstance.maSpriteSets = {}
 	oInstance.miMaxSprites = piMaxSprites
-	oInstance:init(psImageFile, piWidth, piHeight)
+	oInstance:init(psImageFile, piSpriteWidth, piSpriteHeight)
 	
 	return oInstance
 end
 
 --*******************************************************
-function cSpriteGenerator:init(psImageFile, piWidth, piHeight)
-	oSheet = sprite.newSpriteSheet(psImageFile, piWidth, piHeight)
+function cSpriteGenerator:init(psImageFile, piSpriteWidth, piSpriteHeight)
+	oSheet = sprite.newSpriteSheet(psImageFile, piSpriteWidth, piSpriteHeight)
 	if oSheet == nil then
 		error ("couldnt create a spritesheet from file: " + psImageFile)
 	end
