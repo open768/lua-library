@@ -10,32 +10,24 @@ require "inc.lib.lib-events"
 require "inc.lib.lib-imgcutter"
 require "inc.lib.lib-animate"
 
---[[
-	USAGE
-	=====
-	myGroup=cMultiLineText.create({options})
-		options must contain
-			text, maxWidth
-		optional options
-			font, fontsize, align, maxHeight, colour
-		
 
-	** note that while display.newtext does have multiline capabilities, 
-	you cant align the text using that, or get fine control. And as 
-	you dont have the source you cant modify it to do what you want.
-	with this code - you have the source = you have the flexiblity
---]]
-cImgExploder = {
-	className="cImgExploder", data=nil, exploding=false, eventName="onCompleteAnim",
-	gap=0,rows=nil, cols=nil, ImgWidth=0, ImgHeight=0, minSpeed=100
-}
-	
-cLibEvents.instrument(cImgExploder)
+--########################################################
+--#
+--########################################################
 cImgExploderData = {className="cImgExploderData", img,x,y,rot,dx,dy,drot}
 
 --########################################################
 --#
 --########################################################
+cImgExploder = {
+	className="cImgExploder", data=nil, exploding=false, eventName="onCompleteAnim",
+	gap=0,rows=nil, cols=nil, ImgWidth=0, ImgHeight=0, minSpeed=100
+}
+cLibEvents.instrument(cImgExploder)
+
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- +
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 function cImgExploder.create(paOpts)
 	if not paOpts then	error "cImgExploder: option array mandatory " end
 	if not paOpts.img then	error "cImgExploder: text mandatory" end
@@ -50,7 +42,9 @@ function cImgExploder.create(paOpts)
 	return oInstance 
 end
 
--- ********************************************************
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- +
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 function cImgExploder:prv__Init(psImg, piCellW, piCellH)
 	local oGen, iCountX, iCountY
 	local aData, iRow, iCol, iIndex
@@ -97,7 +91,9 @@ function cImgExploder:prv__getAnimator()
 	return oAnim 
 end
 
--- ********************************************************
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- +
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 function cImgExploder:reset( piAnimSpeed)
 	local oAnim, iRow, iCol, oItem, bWait
 	
@@ -127,7 +123,6 @@ function cImgExploder:reset( piAnimSpeed)
 		end
 	end
 	
-	cDebug:print(DEBUG__DEBUG, "animating now...")
 	oAnim:go( )	
 end
 
@@ -162,12 +157,14 @@ function cImgExploder:explode(piMinSpeed, piMaxSpeed)
 end
 
 -- ********************************************************
+function cImgExploder:stop()
+	self.exploding = false
+	-- TBD
+end
+
+-- ********************************************************
 function cImgExploder:onCompleteAnim()
 	self.exploding = false
 	self:notify({name=self.eventName})
 end
 
--- ********************************************************
-function cImgExploder:stop()
-	self.exploding = false
-end
