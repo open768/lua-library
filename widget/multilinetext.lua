@@ -6,7 +6,6 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 --]]
 require "inc.lib.lib-utility"
 require "inc.lib.lib-class"
-require "inc.lib.lib-utility"
 
 cMultiLineText = {
 	className="cMultiLineText",

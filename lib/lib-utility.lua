@@ -157,6 +157,19 @@ function utility.makeOverlay()
 end
 
 --*******************************************************
+function utility.getImageDimensions(psImageFile)
+	local oImg, iw,ih
+	
+	oImg = display.newImage(psImageFile)
+	if not oImg then cDebug:throw("cant load image "..psImageFile) end
+	iw = oImg.width
+	ih = oImg.height
+	oImg:removeSelf()
+	
+	return iw,ih
+end
+
+--*******************************************************
 function utility.getSpriteSets(psImageFile, poSpriteData)
 	local oSpriteData, oSheet, aFrames, aSpriteSets, iItem, oItem
 	
@@ -338,6 +351,18 @@ function utility:getRandomItem(paArray)
 	return paArray[math.random( #paArray)]
 end
 
+--*******************************************************
+function utility.make2DArray(piRows)
+	local aArray, iRow
+	aArray = {}
+	
+	for iRow=1,piRows do
+		aArray[iRow] = {}
+	end
+	
+	return aArray
+end
+
 -- ####################################################
 -- # STRINGS
 -- ####################################################
@@ -345,6 +370,7 @@ function utility.FindNoCase(psStr, psWhat)
 	return string.find( string.lower(psStr), string.lower(psWhat),1)
 end
 
+--*******************************************************
 function utility.defaultValue( pa, pDefault)
 	if pa == nil then 
 		return pDefault

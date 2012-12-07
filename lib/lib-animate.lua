@@ -6,7 +6,8 @@ LICENSE
 
 	Absolutely no warranties or guarantees given or implied - use at your own risk
 	Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
-
+Usage
+	
 example usage: 
 	mylistener = {}
 	function mylistener:myOnCompleteAnimation(poEvent)
@@ -16,9 +17,10 @@ example usage:
 	oAnim = cAnimator:create()										-- creates the object
 	oAnim:add( obj1,  {isVisible=false}, {isSetup=true})				-- sets up obj1 to be invisible
 	oAnim:add( oObj,  {x=100, y=100, isVisible=true}, {isSetup=true})	-- moves obj1 to x,y and makes visible
-	oAnim:add( oObj,  {scale=2}, {wait=true})						-- transition to scale 2 wait for completion before next step
-	oAnim:add( oObj,  {x=200,y=100}, {wait=false})					-- transition to new x,y
+	oAnim:add( oObj,  {scale=2, time=500}, {wait=true})						-- transition to scale 2 wait for completion before next step
+	oAnim:add( oObj,  {x=200,y=100}, {wait=false})	-- transition to new x,y and wait for everything to complete
 
+	oAnim.wait4All = true											-- waits until all transitions are complete
 	oAnim.eventName = "myOnCompleteAnimation"						-- choose the event name to fire when animation ended
 	oAnim:addListener("myOnCompleteAnimation", mylistener) 
 	oAnim:go( )														-- run the sequence and then invoke callback
@@ -26,8 +28,8 @@ example usage:
 parameters to :add function
 	1	table	display object or group
 	2	table	final state of object
-	3	boolean wait for step to finish
-	4	boolean	is this a setup step
+	3	table 	options [wait,isSetup]
+
 --]]
 
 require "inc.lib.lib-events"
@@ -71,26 +73,36 @@ function cAnimator:create( )
 	local oInstance = cClass.createInstance(self)
 	
 	oInstance.commands = {}
+	oInstance.nComplete = 0
 	oInstance.step = 0
 	oInstance.autopurge = false
+	oInstance.wait4All = false
+	oInstance.counterEvent = cLibEvents.makeEventClosure( oInstance, "onTransitionCount")
 	
 	-- return the instance
 	return oInstance
 end
 
---*******************************************************
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 function cAnimator:add( poObj, paFinalState, poOptions)
+	local oCommand, iIndex
+	
 	if (poOptions==nil) then
-		cDebug:throw("cAnimator.add called instead of cAnimator:add")
+		cDebug:throw("no options cAnimator.add called instead of cAnimator:add")
 	end
 	if (poObj==nil) then
 		cDebug:throw("cAnimator - attempt to add empty object")
 	end
-	if poOptions.time == nil then
+	if (paFinalState.time) == nil then
 		cDebug:printOnce(DEBUG__WARN,"cAnimator:add no time set - using default")
 	end
 	
-	table.insert(self.commands, cAnimatorItem:create(poObj, paFinalState, poOptions))
+	oCommand = cAnimatorItem:create(poObj, paFinalState, poOptions)
+	table.insert(self.commands, oCommand )
+	iIndex = table.indexOf(self.commands, oCommand)
+	oCommand.index = iIndex 
 end
 
 --*******************************************************
@@ -109,17 +121,26 @@ function cAnimator:go()
 	
 	-- dont do anything if no commands
 	if #(self.commands) == 0 then 
-		cDebug:print(DEBUG__WARN,"no transitions")
+		cDebug:print(DEBUG__ERROR,"no transitions to animate")
 		return
 	end
 	
 	self.step=0
+	self.nComplete = 0
 	
 	-- do each step at a time
 	self:prv_doStep(1)
 end
 
 --*******************************************************
+function cAnimator:stopSounds()
+	self.mute = true
+	if self.sndplayer then self.sndplayer:stop() end
+end
+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 function cAnimator:onComplete(poEvent)
 	if self.waitSFX and (not self.SFXEnded)  then
 		-- nothing doing wait for sound to complete
@@ -129,9 +150,16 @@ function cAnimator:onComplete(poEvent)
 end
 
 --*******************************************************
-function cAnimator:stopSounds()
-	self.mute = true
-	if self.sndplayer then self.sndplayer:stop() end
+function cAnimator:onTransitionCount(poEvent)
+
+	if not self.commands then return end
+	
+	self.nComplete = self.nComplete + 1
+	
+	if self.wait4All and (self.nComplete >= #(self.commands)) then
+		self:prv_notifyComplete()	
+		return
+	end
 end
 
 --*******************************************************
@@ -141,7 +169,9 @@ function cAnimator:onSFXEnd(poEvent)
 	self:onComplete(poEvent)
 end
 
---*******************************************************
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 function cAnimator:prv_notifyComplete()
 	local oItem
 
@@ -157,12 +187,16 @@ end
 
 --*******************************************************
 function cAnimator:prv_doStep(piStep)
-	local oItem, fnCallBack, sKey, sValue, oEvent
+	local oItem, fnCallBack, sKey, sValue, oEvent, bNotify
 	
-	
+
 	-- if gone past the end of the array we've finished
 	if piStep > #(self.commands) then
-		self:prv_notifyComplete()
+		if self.wait4Alll then	
+			self:onTransitionCount() 
+		else
+			self:prv_notifyComplete() 
+		end
 		return
 	end
 	
@@ -205,6 +239,8 @@ function cAnimator:prv_doStep(piStep)
 		--do the transition
 		if  oItem.wait then
 			oItem.state.onComplete = self
+		else
+			oItem.state.onComplete = self.counterEvent
 		end
 		transition.to(oItem.obj, oItem.state)
 
