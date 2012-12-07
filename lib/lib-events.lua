@@ -3,6 +3,22 @@ This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unport
 	http://creativecommons.org/licenses/by-sa/3.0/
 Absolutely no warranties or guarantees given or implied - use at your own risk
 Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
+
+Usage
+	require "lib-events"
+	local myTable1 = {}
+	cLibEvents.instrument(myTable1)  -- adds methods to table1
+	function myTable1:myfunction() 
+		...
+		self.notify({name="myeventname", ...}) -- fires the event
+	end
+	
+	local myTable2 = {}
+	function myTable2:myeventname(poEvent)		-- receives the event
+		...
+	end
+	myTable1:addListener("myeventname", myTable2) -- registers the listener
+	
 --]]
 require "inc.lib.lib-debug"
 
