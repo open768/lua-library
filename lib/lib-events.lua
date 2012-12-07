@@ -10,7 +10,7 @@ Usage
 	cLibEvents.instrument(myTable1)  -- adds methods to table1
 	function myTable1:myfunction() 
 		...
-		self.notify({name="myeventname", ...}) -- fires the event
+		self:notify({name="myeventname", ...}) -- fires the event
 	end
 	
 	local myTable2 = {}
