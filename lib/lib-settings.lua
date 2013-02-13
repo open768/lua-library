@@ -6,6 +6,7 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 --]]
 
 require "inc.lib.lib-utility"
+require "inc.lib.lib-json"
 
 cSettings = { 
 	data={},
@@ -20,7 +21,7 @@ function  cSettings:load()
 	
 	if self.loaded then return end -- can only load once as file wont change 
 	
-	oData = utility.loadJson(cSettings.filename, system.DocumentsDirectory)
+	oData = cJson.loadJson(cSettings.filename, system.DocumentsDirectory)
 	if oData  then  
 		self.data = oData 
 	else
@@ -58,7 +59,7 @@ end
 --************************************************************************
 function cSettings:commit()
 	if self.changed >0 then
-		utility.writeJson(self.data, cSettings.filename, system.DocumentsDirectory )
+		cJson.writeJson(self.data, cSettings.filename, system.DocumentsDirectory )
 		self.changed  = 0
 	end
 end

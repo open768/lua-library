@@ -15,7 +15,6 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 
 require ("inc.lib.lib-events")
 require "inc.lib.lib-class"
-require "analytics"
 
 -- ####################################################################
 -- # cards object
@@ -183,7 +182,7 @@ end
 --*******************************************************
 function cCards:prv_enterScene( poScene)
 	cDebug:print(DEBUG__DEBUG, "cCards:prv_enterScene:", poScene.sceneName)
-	analytics.logEvent("Scene: "..poScene.sceneName)
+	cAnalytics.logEvent("Scene: "..poScene.sceneName)
 	
 	if not poScene.view then
 		cDebug:print(DEBUG__DEBUG, "creating view on scene:", poScene.sceneName)

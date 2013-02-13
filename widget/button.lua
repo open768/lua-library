@@ -8,7 +8,7 @@ require "inc.widget.toggle"
 require "inc.lib.lib-class"
 require ("inc.lib.lib-debug")
 
-cButtonWidget = { delay=150,  eventName = "onPress" }
+cButtonWidget = { delay=150,  eventName = "onPress", pressed = false }
 
 --*******************************************************
 function cButtonWidget:createHoriz( psSprite)
@@ -31,6 +31,7 @@ function cButtonWidget:onToggle(poEvent)
 	cDebug:print(DEBUG__DEBUG, "cButtonWidget:onToggle");
 	if poEvent.toggled then
 		cDebug:print(DEBUG__EXTRA_DEBUG, "cButtonWidget: timer started");
+		self.paused = true
 		timer.performWithDelay(self.delay, self,1)
 	end
 	return true
@@ -40,7 +41,7 @@ end
 function cButtonWidget:timer(poEvent)
 	cDebug:print(DEBUG__EXTRA_DEBUG, "cButtonWidget: timer fired");
 	self:toggle(false)
-	-- #bug# perform notify after button has returned state
 	self:notify({ name=self.eventName, state=poEvent.state, target=self})
+	self.paused = false
 end
 

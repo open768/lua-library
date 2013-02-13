@@ -19,6 +19,10 @@ cAds = {
 -- *********************************************************
 -- shows and hides banner adds on a timer
 function cAds:init(psProvider, psType, paArgs)
+	if utility.isSimulator  then 
+		cDebug:print(DEBUG__WARN,"** Ads not available on simulator")
+		return
+	end
 	ads.init(psProvider, self.applicationID)	
 	
 	self.sType = psType
@@ -32,12 +36,16 @@ end
 
 -- *********************************************************
 function cAds:orientation(poEvent)
+	if utility.isSimulator  then return end
+	
 	cDebug:print(DEBUG__INFO, "ads orientation:",poEvent.type)
 	self.whichWay  = poEvent.type
 end
 
 -- *********************************************************
 function cAds:showBannerAd()
+	if utility.isSimulator  then return end
+	
 	if self.paused then return end
 	self.otimer = nil
 	ads.show(self.sType, self.aArgs)	
