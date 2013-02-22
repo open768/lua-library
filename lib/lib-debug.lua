@@ -105,6 +105,8 @@ function cDebug.prv__toString(pvWhat, piLevel)
 			table.insert (aStrings, "]")
 		elseif (sType=="function") then
 			table.insert(aStrings,"<function>")
+		elseif (sType=="number") then
+			table.insert(aStrings,tostring(pvWhat))
 		else
 			table.insert(aStrings,"{"..sType.."}")
 			table.insert(aStrings,tostring(pvWhat))

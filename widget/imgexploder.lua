@@ -105,6 +105,7 @@ function cImgExploder:reset( piAnimSpeed)
 	self.exploding=true
 	oAnim = self:prv__getAnimator()
 
+	-- make everything visible
 	bWait=false					-- last image must wait before starting anim
 	for iRow=1,self.rows do
 		for iCol=1,self.cols do
@@ -114,12 +115,11 @@ function cImgExploder:reset( piAnimSpeed)
 		end
 	end
 	
-	bWait=false					-- last image must wait before firing an event
+	-- now move everything
 	for iRow=1,self.rows do
 		for iCol=1,self.cols do
 			oItem = self.data[iRow][iCol]
-			if (iRow==self.rows) and (iCol==self.cols )then bWait = true end
-			oAnim:add(oItem.img, {x=oItem.x, y=oItem.y, time=piAnimSpeed, xScale=1.0, yScale=1.0}, {wait = bWait})
+			oAnim:add(oItem.img, {x=oItem.x, y=oItem.y, time=piAnimSpeed, xScale=1.0, yScale=1.0}, {})
 		end
 	end
 	

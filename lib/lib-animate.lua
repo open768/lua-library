@@ -34,11 +34,13 @@ parameters to :add function
 
 require "inc.lib.lib-events"
 require "inc.lib.lib-class"
+require "inc.lib.lib-stack"
 
 --########################################################
 --#
 --########################################################
-cAnimatorItem = { className="cAnimatorItem" }
+cAnimatorItem = { className="cAnimatorItem" , eventName="onTransitionComplete"}
+cLibEvents.instrument(cAnimatorItem)
 
 --*******************************************************
 function cAnimatorItem:create(poObj, paFinalState, poOptions)
@@ -51,17 +53,83 @@ function cAnimatorItem:create(poObj, paFinalState, poOptions)
 	oInstance.isSetup=poOptions.isSetup
 	oInstance.isEvent=poOptions.isEvent
 	oInstance.sfx=poOptions.sfx
-	oInstance.mute = false
 	oInstance.sndplayer = nil
+	oInstance.animator = nil
+	oInstance.inTransition = false
+	oInstance.serialNo=-1
 	return oInstance
 end
 
-function cAnimatorItem:purge()
-	if self.obj then
-		self.obj:removeSelf()
-		self.obj = nil
+--*******************************************************
+function cAnimatorItem:execute()
+	local fnCallBack = nil
+	local bWait = self.wait
+	
+	if self.inTransition then
+		cDebug:throw("cAnimatorItem - allready executing")
+	end
+	self.inTransition = true
+	cDebug:print(DEBUG__DEBUG, "executing anim: ", self.serialNo)
+	
+	-- *** stream the sound if defined - will always do the transition
+	if self.sfx then
+		if self.waitSFX then
+			fnCallBack = function(poEvent) self:onSFXEnd(poEvent) end
+			self.waitSFX = true
+			self.SFXEnded = false
+			bWait= true
+		end
+		cDebug:print(DEBUG__DEBUG, "playing sound")
+		self.sndplayer = cSoundPlayer:play({self.sfx}, fnCallBack )
+	end
+	
+	-- do the animation
+	self.state.onComplete = self
+	transition.to(self.obj, self.state)
+
+	-- if not waiting for the animation to finish do the next straight away
+	if not bWait then self:nextItem() end
+end
+
+--*******************************************************
+function cAnimatorItem:onSfxEnd(poEvent)
+	self.waitSFX = false
+	self.SFXEnded = true
+	
+	-- nextitem event will have fired if the wait flag wasnt set
+	if not self.wait then
+		return
+	end
+	
+	-- if animation  is taking longer wait 
+	if not self.inTransition then		
+		self:nextItem()
 	end
 end
+
+--*******************************************************
+function cAnimatorItem:onComplete(poEvent)
+	cDebug:print(DEBUG__DEBUG, "completed anim: ", self.serialNo)
+
+	self.inTransition = false
+	
+	-- nextitem event will have fired if the wait flag wasnt set
+	if not self.wait then
+		return
+	end
+	
+	-- if sound is taking longer then wait
+	if not (self.waitSFX and (not self.SFXEnded))  then
+		self:nextItem()
+	end
+end
+
+--*******************************************************
+function cAnimatorItem:nextItem()
+	self:notify({ name=self.eventName, serialNo=self.serialNo })
+end
+
+
 
 --########################################################
 --#
@@ -72,22 +140,20 @@ cLibEvents.instrument(cAnimator)
 function cAnimator:create( )
 	local oInstance = cClass.createInstance(self)
 	
-	oInstance.commands = {}
-	oInstance.nComplete = 0
-	oInstance.step = 0
-	oInstance.autopurge = false
+	oInstance.commands = cStack:create( cStackModes.filo)
 	oInstance.wait4All = false
-	oInstance.counterEvent = cLibEvents.makeEventClosure( oInstance, "onTransitionCount")
+	oInstance.completed = false
+	oInstance.animSerialNo = 0
 	
 	-- return the instance
 	return oInstance
 end
 
---+++++++++++++++++++++++++++++++++++++++++++++++++++++++
---+
---+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- ============================================================
+-- =
+-- ============================================================
 function cAnimator:add( poObj, paFinalState, poOptions)
-	local oCommand, iIndex
+	local oCommand
 	
 	if (poOptions==nil) then
 		cDebug:throw("no options cAnimator.add called instead of cAnimator:add")
@@ -99,16 +165,24 @@ function cAnimator:add( poObj, paFinalState, poOptions)
 		cDebug:printOnce(DEBUG__WARN,"cAnimator:add no time set - using default")
 	end
 	
+	-- increase the serial number
+	self.animSerialNo = self.animSerialNo + 1
+	
+	-- create step object
 	oCommand = cAnimatorItem:create(poObj, paFinalState, poOptions)
-	table.insert(self.commands, oCommand )
-	iIndex = table.indexOf(self.commands, oCommand)
-	oCommand.index = iIndex 
+	oCommand.animator = self
+	oCommand.serialNo = self.animSerialNo
+	oCommand:addListener("onTransitionComplete", self )
+
+	-- add step to stack
+	self.commands:push(oCommand )
 end
 
 --*******************************************************
 function cAnimator:stop()
 	-- not sure this is a good idea 
 	-- as dont want to leave animation in unfinished state
+	-- best to apply all transformations quickly and then stop
 end
 
 --*******************************************************
@@ -120,133 +194,104 @@ function cAnimator:go()
 	end
 	
 	-- dont do anything if no commands
-	if #(self.commands) == 0 then 
+	if not self.commands.top  then 
 		cDebug:print(DEBUG__ERROR,"no transitions to animate")
 		return
 	end
 	
 	self.step=0
 	self.nComplete = 0
+	self.completed = false
+	self.animSerialNo = 0
+	self.animCounter = 0
 	
 	-- do each step at a time
-	self:prv_doStep(1)
+	self:prv_doNext()
 end
 
---*******************************************************
-function cAnimator:stopSounds()
-	self.mute = true
-	if self.sndplayer then self.sndplayer:stop() end
-end
-
---+++++++++++++++++++++++++++++++++++++++++++++++++++++++
---+
---+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-function cAnimator:onComplete(poEvent)
-	if self.waitSFX and (not self.SFXEnded)  then
-		-- nothing doing wait for sound to complete
-	else
-		self:prv_doStep(self.step)	
-	end
-end
-
---*******************************************************
-function cAnimator:onTransitionCount(poEvent)
-
-	if not self.commands then return end
-	
-	self.nComplete = self.nComplete + 1
-	
-	if self.wait4All and (self.nComplete >= #(self.commands)) then
-		self:prv_notifyComplete()	
-		return
-	end
-end
-
---*******************************************************
-function cAnimator:onSFXEnd(poEvent)
-	self.waitSFX = false
-	self.SFXEnded = true
-	self:onComplete(poEvent)
-end
-
---+++++++++++++++++++++++++++++++++++++++++++++++++++++++
---+
---+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- ============================================================
 function cAnimator:prv_notifyComplete()
-	local oItem
-
-	if self.autopurge then
-		cDebug:print(DEBUG__DEBUG,"cAnimator:purging") 
-		for _,oItem in pairs(self.commands) do
-			oItem:purge()
-		end
+	if 	self.completed then
+		cDebug:throw("Animator completed more than once!!!")
 	end
+
+	self.completed = true
 	self.commands = nil		--clear out memory
 	self:notify({ name=self.eventName })
 end
 
---*******************************************************
-function cAnimator:prv_doStep(piStep)
-	local oItem, fnCallBack, sKey, sValue, oEvent, bNotify
+-- ============================================================
+-- =
+-- ============================================================
+function cAnimator:prv_doSetupStep(poItem)
+	local sKey, sValue
 	
+	-- *** do the setup if defined
+	poItem.obj.isVisible = true
+	for  sKey,sValue in pairs(poItem.state) do
+		poItem.obj[sKey] = sValue
+	end
 
-	-- if gone past the end of the array we've finished
-	if piStep > #(self.commands) then
-		if self.wait4Alll then	
-			self:onTransitionCount() 
+	self:prv_doNext()
+end
+
+--*******************************************************
+function cAnimator:prv_doEventStep(poItem)
+	local sKey, sValue, oEvent
+	
+	oEvent = {}
+	for  sKey,sValue in pairs(poItem.state) do
+		oEvent[sKey] = sValue
+		cDebug:print(DEBUG__INFO,"Event:",sKey," -> ",sValue) 
+	end
+	
+	cDebug:print(DEBUG__INFO,"cAnimator dispatching event: ") 
+	poItem.obj:notify(oEvent)
+	self:prv_doNext()
+end
+
+--*******************************************************
+function cAnimator:onTransitionComplete(poEvent)
+	cDebug:print(DEBUG__DEBUG, "cAnimator: completed anim serial:", poEvent.serialNo)
+	self.animCounter = self.animCounter  - poEvent.serialNo
+	self:prv_doNext()
+end
+
+--*******************************************************
+function cAnimator:prv_doNext()
+	local oTopItem
+
+	if 	self.completed then
+		cDebug:throw("Animator executing after completed !!!")
+	end
+
+	-- take the top item off the stack
+	oTopItem = self.commands:pop() 
+	
+	-- if there are no more transitions we've finished
+	if (not oTopItem) then
+		if self.wait4All and not (self.animCounter == 0) then 
+			--do nothing here
 		else
+			cDebug:print(DEBUG__DEBUG,"about to notify complete: inflight ", self.nInFlight)
 			self:prv_notifyComplete() 
 		end
 		return
 	end
 	
-	-- get the thing out of the array
-	oItem = self.commands[piStep]
-	self.step = piStep +1  --next step
-
-	if oItem.isSetup then
-		-- *** do the setup if defined
-		oItem.obj.isVisible = true
-		for  sKey,sValue in pairs(oItem.state) do
-			oItem.obj[sKey] = sValue
-		end
-
-		self:onComplete(nil)
-	elseif oItem.isEvent then
-		-- **** or is this an event
-		oEvent = {}
-		for  sKey,sValue in pairs(oItem.state) do
-			oEvent[sKey] = sValue
-			cDebug:print(DEBUG__INFO,"Event:",sKey," -> ",sValue) 
-		end
-		
-		cDebug:print(DEBUG__INFO,"dispatching event: ") 
-		oItem.obj:notify(oEvent)
-		self:onComplete(nil)
+	-- wait for last item if wait4all
+	if self.wait4All and (self.commands.top == nil) then	
+		oTopItem.wait = true
+	end
+	
+	-- do whatever is needed
+	if oTopItem.isSetup then
+		self:prv_doSetupStep(oTopItem)
+	elseif oTopItem.isEvent then
+		self:prv_doEventStep(oTopItem)
 	else
-		-- *** stream the sound if defined
-		if oItem.sfx and (not self.mute) then
-			if oItem.waitSFX then
-				fnCallBack = function(poEvent) self:onSFXEnd(poEvent) end
-				self.waitSFX = true
-				self.SFXEnded = false
-			else
-				fnCallBack = nil
-			end
-			self.sndplayer = cSoundPlayer:play({oItem.sfx}, fnCallBack )
-		end
-		
-		--do the transition
-		if  oItem.wait then
-			oItem.state.onComplete = self
-		else
-			oItem.state.onComplete = self.counterEvent
-		end
-		transition.to(oItem.obj, oItem.state)
-
-		if not oItem.wait then
-			self:onComplete(nil)
-		end
+		self.animCounter = self.animCounter  + oTopItem.serialNo
+		oTopItem:execute()
 	end
 end
 
