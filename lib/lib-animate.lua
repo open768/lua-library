@@ -146,6 +146,8 @@ function cAnimator:create( )
 	oInstance.wait4All = false
 	oInstance.completed = false
 	oInstance.animSerialNo = 0
+	oInstance.previousItem=nil
+	oInstance.animCounter = 0
 	
 	-- return the instance
 	return oInstance
@@ -267,8 +269,14 @@ function cAnimator:prv_doNext()
 		cDebug:throw("Animator executing after completed !!!")
 	end
 
+	-- check if were waiting for the previous transition
+	if self.previousItem and self.previousItem.wait then
+		if self.animCounter > 0 then return end
+	end
+	
 	-- take the top item off the stack
 	oTopItem = self.commands:pop() 
+	self.previousItem = oTopItem
 	
 	-- if there are no more transitions we've finished
 	if (not oTopItem) then

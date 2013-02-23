@@ -10,24 +10,17 @@ require "inc.lib.lib-events"
 require "inc.lib.lib-imgcutter"
 require "inc.lib.lib-animate"
 
-
 --########################################################
 --#
 --########################################################
 cImgExploderData = {className="cImgExploderData", img,x,y,rot,dx,dy,drot}
-
---########################################################
---#
---########################################################
 cImgExploder = {
 	className="cImgExploder", data=nil, exploding=false, eventName="onCompleteAnim",
 	gap=0,rows=nil, cols=nil, ImgWidth=0, ImgHeight=0, minSpeed=100
 }
 cLibEvents.instrument(cImgExploder)
 
--- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
--- +
--- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-- ********************************************************
 function cImgExploder.create(paOpts)
 	if not paOpts then	error "cImgExploder: option array mandatory " end
 	if not paOpts.img then	error "cImgExploder: text mandatory" end
@@ -42,9 +35,16 @@ function cImgExploder.create(paOpts)
 	return oInstance 
 end
 
--- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
--- +
--- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+-- ********************************************************
+function cImgExploder:stop()
+	self.exploding = false
+	-- TBD
+end
+
+--########################################################
+--# GET YER PRIVATES OUT
+--########################################################
 function cImgExploder:prv__Init(psImg, piCellW, piCellH)
 	local oGen, iCountX, iCountY
 	local aData, iRow, iCol, iIndex
@@ -90,10 +90,15 @@ function cImgExploder:prv__getAnimator()
 	oAnim:addListener("onCompleteAnim", self) 
 	return oAnim 
 end
+-- ********************************************************
+function cImgExploder:onCompleteAnim()
+	self.exploding = false
+	self:notify({name=self.eventName})
+end
 
--- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
--- +
--- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--########################################################
+--# ANIMATIONS
+--########################################################
 function cImgExploder:reset( piAnimSpeed)
 	local oAnim, iRow, iCol, oItem, bWait
 	
@@ -127,28 +132,26 @@ function cImgExploder:reset( piAnimSpeed)
 end
 
 -- ********************************************************
-function cImgExploder:explode(piMinSpeed, piMaxSpeed)
-	local oAnim, bWait, iRow, iCol, oItem
-	local iSpeed, iEndX,iEndY, idx, idy
+function cImgExploder:goSmall(piMinSpeed, piMaxSpeed)
+	local oAnim, iRow, iCol, oItem
+	local iSpeed, iEndX,iEndY, iDx, iDy
 	
 	if self.exploding then
 		error "allready exploding"
 	end
 	
 	oAnim = self:prv__getAnimator()
-	bWait=false					-- last image must wait before firing an event
 	
-	idx = utility.Screen.w/self.ImgWidth
-	idy = utility.Screen.h/self.ImgHeight
+	iDx = utility.Screen.w/self.ImgWidth
+	iDy = utility.Screen.h/self.ImgHeight
 	
 	for iRow=1,self.rows do
 		for iCol=1,self.cols do
 			oItem = self.data[iRow][iCol]
-			if (iRow==self.rows) and (iCol==self.cols )then bWait = true end
 			
 			iSpeed = math.random(piMinSpeed, piMaxSpeed)
-			iEndX = oItem.x * idx
-			iEndY = oItem.y * idy
+			iEndX = oItem.x * iDx
+			iEndY = oItem.y * iDy
 			
 			oAnim:add(oItem.img, {x=iEndX, y=iEndY, xScale=0.2, yScale=0.2, time=iSpeed}, {wait = bWait})
 		end
@@ -156,15 +159,63 @@ function cImgExploder:explode(piMinSpeed, piMaxSpeed)
 	oAnim:go()
 end
 
+
 -- ********************************************************
-function cImgExploder:stop()
-	self.exploding = false
-	-- TBD
+function cImgExploder:goBig(piMinSpeed, piMaxSpeed, piScale)
+	local oAnim, iRow, iCol, oItem
+	local iSpeed, iEndX,iEndY, iDx, iDy
+	
+	if self.exploding then
+		error "allready exploding"
+	end
+	
+	oAnim = self:prv__getAnimator()
+	
+	iDx = utility.Screen.w/self.ImgWidth
+	iDy = utility.Screen.h/self.ImgHeight
+	
+	for iRow=1,self.rows do
+		for iCol=1,self.cols do
+			oItem = self.data[iRow][iCol]
+			
+			iSpeed = math.random(piMinSpeed, piMaxSpeed)
+			iEndX = oItem.x * iDx
+			iEndY = oItem.y * iDy
+			
+			oAnim:add(oItem.img, {x=iEndX, y=iEndY, xScale=piScale, yScale=piScale, time=iSpeed}, {wait = bWait})
+		end
+	end
+	oAnim:go()
 end
 
 -- ********************************************************
-function cImgExploder:onCompleteAnim()
-	self.exploding = false
-	self:notify({name=self.eventName})
+function cImgExploder:goBigRandom(piMinSpeed, piMaxSpeed, piScale)
+	local oAnim, iRow, iCol, oItem
+	local iSpeed, iEndX,iEndY, iDx, iDy, iRndX, iRndY , iW, iH
+	
+	if self.exploding then
+		error "allready exploding"
+	end
+	
+	oAnim = self:prv__getAnimator()
+	
+	iDx = utility.Screen.w/self.ImgWidth
+	iDy = utility.Screen.h/self.ImgHeight
+	
+	iW = self.ImgWidth/2
+	iH = self.ImgHeight/2
+	for iRow=1,self.rows do
+		for iCol=1,self.cols do
+			oItem = self.data[iRow][iCol]
+			
+			iSpeed = math.random(piMinSpeed, piMaxSpeed)
+			iRndX = math.random(-iW, iW)
+			iRndY = math.random(-iH, iH)
+			iEndX = iRndX * iDx
+			iEndY = iRndY * iDy
+			
+			oAnim:add(oItem.img, {x=iEndX, y=iEndY, xScale=piScale, yScale=piScale, time=iSpeed}, {wait = bWait})
+		end
+	end
+	oAnim:go()
 end
-
