@@ -17,13 +17,14 @@ example usage:
 	oAnim = cAnimator:create()										-- creates the object
 	oAnim:add( obj1,  {isVisible=false}, {isSetup=true})				-- sets up obj1 to be invisible
 	oAnim:add( oObj,  {x=100, y=100, isVisible=true}, {isSetup=true})	-- moves obj1 to x,y and makes visible
-	oAnim:add( oObj,  {scale=2, time=500}, {wait=true})						-- transition to scale 2 wait for completion before next step
-	oAnim:add( oObj,  {x=200,y=100}, {wait=false})	-- transition to new x,y and wait for everything to complete
+	oAnim:add( oObj,  {scale=2, time=500}, {wait=true})					-- transition to scale 2 wait for completion before next step
+	oAnim:add( oObj,  {x=200,y=100}, {wait=false})						-- wait after transition
+	oAnim:add( obj1,  {isVisible=false}, {sfx="my.mp3", waitSFX=true})	-- play a sound at same time - synchronise
 
-	oAnim.wait4All = true											-- waits until all transitions are complete
-	oAnim.eventName = "myOnCompleteAnimation"						-- choose the event name to fire when animation ended
+	oAnim.wait4All = true												-- waits until all transitions are complete
+	oAnim.eventName = "myOnCompleteAnimation"							-- choose the event name to fire when animation ended
 	oAnim:addListener("myOnCompleteAnimation", mylistener) 
-	oAnim:go( )														-- run the sequence and then invoke callback
+	oAnim:go( )															-- run the sequence and then invoke callback
 
 parameters to :add function
 	1	table	display object or group
@@ -125,8 +126,9 @@ function cAnimatorItem:onComplete(poEvent)
 end
 
 --*******************************************************
+-- doesnt need to use notify as its slower
 function cAnimatorItem:nextItem()
-	self:notify({ name=self.eventName, serialNo=self.serialNo })
+	self.animator:onTransitionComplete({serialNo=self.serialNo })
 end
 
 
@@ -172,10 +174,10 @@ function cAnimator:add( poObj, paFinalState, poOptions)
 	oCommand = cAnimatorItem:create(poObj, paFinalState, poOptions)
 	oCommand.animator = self
 	oCommand.serialNo = self.animSerialNo
-	oCommand:addListener("onTransitionComplete", self )
 
 	-- add step to stack
 	self.commands:push(oCommand )
+	return oCommand.serialNo
 end
 
 --*******************************************************
