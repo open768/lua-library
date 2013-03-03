@@ -17,8 +17,8 @@ example usage:
 	oAnim = cAnimator:create()										-- creates the object
 	oAnim:add( obj1,  {isVisible=false}, {isSetup=true})				-- sets up obj1 to be invisible
 	oAnim:add( oObj,  {x=100, y=100, isVisible=true}, {isSetup=true})	-- moves obj1 to x,y and makes visible
-	oAnim:add( oObj,  {scale=2, time=500}, {wait=true})					-- transition to scale 2 wait for completion before next step
-	oAnim:add( oObj,  {x=200,y=100}, {wait=false})						-- wait after transition
+	oAnim:add( oObj,  {scale=2, time=500}, {wait=true})					-- wait for previous transitions and then transition to scale 2 
+	oAnim:add( oObj,  {x=200,y=100}, {delay=100})						-- delay 100ms before starting
 	oAnim:add( obj1,  {isVisible=false}, {sfx="my.mp3", waitSFX=true})	-- play a sound at same time - synchronise
 
 	oAnim.wait4All = true												-- waits until all transitions are complete
@@ -53,24 +53,44 @@ function cAnimatorItem:create(poObj, paFinalState, poOptions)
 	oInstance.waitSFX=poOptions.waitSFX
 	oInstance.isSetup=poOptions.isSetup
 	oInstance.isEvent=poOptions.isEvent
+	oInstance.delay=poOptions.delay
+	if oInstance.delay == nil then oInstance.delay = 0 end
 	oInstance.sfx=poOptions.sfx
 	oInstance.sndplayer = nil
 	oInstance.animator = nil
 	oInstance.inTransition = false
 	oInstance.serialNo=-1
+	oInstance.timerObj = nil
 	return oInstance
 end
 
 --*******************************************************
 function cAnimatorItem:execute()
+	if self.inTransition then
+		cDebug:throw("CAI - allready executing")
+	end
+	self.inTransition = true
+	
+	if self.delay > 0 then
+		self.timerObj = timer.performWithDelay(self.delay, self)
+	else
+		self:prv_execute()
+	end
+end
+
+--*******************************************************
+function cAnimatorItem:timer(poEvent)
+	cDebug:print(DEBUG__EXTRA_DEBUG, "CAI finised timer : ", self.serialNo)
+	self.timerObj  = nil
+	self:prv_execute()
+end
+
+--*******************************************************
+function cAnimatorItem:prv_execute()
 	local fnCallBack = nil
 	local bWait = self.wait
 	
-	if self.inTransition then
-		cDebug:throw("cAnimatorItem - allready executing")
-	end
-	self.inTransition = true
-	cDebug:print(DEBUG__DEBUG, "executing anim: ", self.serialNo)
+	cDebug:print(DEBUG__EXTRA_DEBUG, "CAI executing anim: ", self.serialNo)
 	
 	-- *** stream the sound if defined - will always do the transition
 	if self.sfx then
@@ -80,20 +100,21 @@ function cAnimatorItem:execute()
 			self.SFXEnded = false
 			bWait= true
 		end
-		cDebug:print(DEBUG__DEBUG, "playing sound")
+		cDebug:print(DEBUG__DEBUG, "CAI playing sound")
 		self.sndplayer = cSoundPlayer:play({self.sfx}, fnCallBack )
 	end
 	
 	-- do the animation
 	self.state.onComplete = self
 	transition.to(self.obj, self.state)
-
+	
 	-- if not waiting for the animation to finish do the next straight away
 	if not bWait then self:nextItem() end
 end
 
 --*******************************************************
 function cAnimatorItem:onSfxEnd(poEvent)
+	cDebug:print(DEBUG__EXTRA_DEBUG, "CAI completed sound: ", self.serialNo)
 	self.waitSFX = false
 	self.SFXEnded = true
 	
@@ -110,7 +131,7 @@ end
 
 --*******************************************************
 function cAnimatorItem:onComplete(poEvent)
-	cDebug:print(DEBUG__DEBUG, "completed anim: ", self.serialNo)
+	cDebug:print(DEBUG__EXTRA_DEBUG, "CAI completed anim: ", self.serialNo)
 
 	self.inTransition = false
 	

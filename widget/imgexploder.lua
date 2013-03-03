@@ -131,6 +131,43 @@ function cImgExploder:reset( piAnimSpeed)
 	oAnim:go( )	
 end
 
+--########################################################
+function cImgExploder:delayedReset( piAnimSpeed)
+	local oAnim, iRow, iCol, oItem, bWait, iDelay, iIncr
+	
+	if self.exploding then
+		cDebug:print(DEBUG__DEBUG, "stopping...")
+		self:stop()
+	end
+	
+	self.exploding=true
+	oAnim = self:prv__getAnimator()
+
+	-- make everything visible
+	bWait=false					-- last image must wait before starting anim
+	for iRow=1,self.rows do
+		for iCol=1,self.cols do
+			oItem = self.data[iRow][iCol]
+			if (iRow==self.rows) and (iCol==self.cols )then bWait = true end
+			oAnim:add(oItem.img, {isVisible=true}, {isSetup=true, wait=bWait})
+		end
+	end
+	
+	-- now move everything
+	iDelay = 0
+	iIncr = 0.05
+	for iRow=1,self.rows do
+		for iCol=1,self.cols do
+			oItem = self.data[iRow][iCol]
+			oAnim:add(oItem.img, {x=oItem.x, y=oItem.y, time=piAnimSpeed, xScale=1.0, yScale=1.0}, {delay=iDelay})
+			iDelay=iDelay+iIncr
+		end
+	end
+	
+	oAnim:go( )	
+end
+
+
 -- ********************************************************
 function cImgExploder:goSmall(piMinSpeed, piMaxSpeed)
 	local oAnim, iRow, iCol, oItem
