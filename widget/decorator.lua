@@ -2,15 +2,16 @@ cWidgetDecorator = {
 	className="cWidgetDecorator", 
 	widget=nil,
 	}
+cDebug.instrument(cWidgetDecorator)
 
 --[[
 	usage: myObj= cWidgetDecorator:create({options})
 	where options are
-		widget	: 
+		widget	: (mandatory)
 		width	:
 		height	:
 		backColour :
-		border :
+		borderWidth :
 		cornerRadius :
 		borderColour :
 		borderInset:
@@ -21,7 +22,7 @@ cWidgetDecorator = {
 ]]--
 --*******************************************************
 function cWidgetDecorator:create(paOptions)
-	if not self then error "did you call decorator with a . instead of :" end
+	if not self then self:throw( "no options") end
 	
 	local oInstance = cClass.createGroupInstance(self)
 	oInstance:prv__init(paOptions)
@@ -33,9 +34,9 @@ function cWidgetDecorator:prv__init(paOptions)
 	local oGroup
 	
 	-- validate options
-	if not paOptions then	error "decorator must have some properties" end
-	if not paOptions.widget then	error "decorator: no widget" end
-	if not paOptions.backColour then	error "decorator: no backColour" end
+	if not paOptions then	self:throw ("decorator must have some properties") end
+	if not paOptions.widget then	self:throw ("decorator: no widget given") end
+	if not paOptions.backColour then	self:throw ("decorator: no backColour given") end
 	
 	-- validate options
 	self.backColour = paOptions.backColour 
@@ -49,8 +50,10 @@ function cWidgetDecorator:prv__init(paOptions)
 	self.bgHeight = utility.defaultValue( paOptions.height, self.widget.height + self.padding *2)
 	
 	if self.borderWidth >0 then
-		if not paOptions.borderColour then error "decorator: no borderColour" end
+		if not paOptions.borderColour then self:throw( "decorator: no borderColour") end
 		self.borderColour = paOptions.borderColour 
+	else
+		self:debug(DEBUG__DEBUG, "no borderWidth")
 	end
 	self.objs = {}
 	
@@ -69,7 +72,7 @@ end
 
 --*******************************************************
 function cWidgetDecorator:decorate()
-	local iWidw, ich, iw, ih, oBG, oGroup
+	local iWidw, iw, ih, oBG, oGroup
 	
 	-- remove any decorations
 	oGroup = self.decorGrp
@@ -85,7 +88,9 @@ function cWidgetDecorator:decorate()
 	oGroup:insert(oBG)
 	
 	--create border
-	if self.borderWidth == 0 then return end
+	if self.borderWidth == 0 then 
+		return 
+	end
 	
 	oBorder = oBG
 	if self.borderInset then
