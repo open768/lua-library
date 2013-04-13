@@ -9,6 +9,7 @@ require "inc.lib.lib-hex"
 cColours = 
 {
 	className="cColours",
+	names={
 	aliceblue="f0f8ff",antiquewhite="faebd7",aqua="00ffff",aquamarine="7fffd4",azure="f0ffff",	
 	beige="f5f5dc",bisque="ffe4c4",	black="000000",blanchedalmond="ffebcd",blue="0000ff",
 	blueviolet="8a2be2",brown="a52a2a",burlywood="deb887",cadetblue="5f9ea0",chartreuse="7fff00",
@@ -40,7 +41,8 @@ cColours =
 	slategray="708090",slategrey="708090",snow="fffafa",springgreen="00ff7f",steelblue="4682b4",
 	tan="d2b48c",teal="008080",thistle="d8bfd8",tomato="ff6347",turquoise="40e0d0",
 	violet="ee82ee",wheat="f5deb3",white="ffffff",whitesmoke="f5f5f5",yellow="ffff00",
-	yellowgreen="9acd32" }  
+	yellowgreen="9acd32"
+	} }  
 cDebug.instrument(cColours)
  
 --******************************************************* 
@@ -49,7 +51,7 @@ function cColours:getRGB(psColour)
 	
 	if psColour ==nil then self:throw ("cColours:getRGB missing colour name") end
 	
-	sRGB = self[psColour]
+	sRGB = self.names[psColour]
 	if not sRGB then
 		self:throw("no such colour : "..psColour); 
 	end
@@ -68,6 +70,9 @@ function cColours:get(psColour)
 end 
 
 function cColours.explode(poColour)
+	if not poColour.r then
+		cDebug:throw("cColours: not a valid RGB colour", poColour)
+	end
 	return poColour.r,poColour.g,poColour.b
 end
  
