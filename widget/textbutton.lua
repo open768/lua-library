@@ -10,6 +10,7 @@ cTextButton = {
 	downColour="yellow", downBorderColour="white" 
 }
 cLibEvents.instrument(cTextButton)
+cDebug.instrument(cTextButton)
 
 --*******************************************************
 function cTextButton:create( psText)
@@ -51,18 +52,24 @@ function cTextButton:prv_init(psText)
 	self.up = oUp
 	
 	-- create the up and down graphics
-	self.inTap = false
+	self.inTouch = false
 	self.isUp = true
-	self:addEventListener("tap", self)
+	self:addEventListener("touch", self)
 end
 
 --*******************************************************
-function cTextButton:tap( poEvent)
-	if self.inTap then return end
-	if not self.isUp then return end
+function cTextButton:touch( poEvent)
+	if not (poEvent.phase == "began") then
+		return true 
+	end
+	
+	if self.inTouch then 	return true 	end
+	if not self.isUp then 	return true 	end
 	
 	self.up.isVisible = false
 	self.down.isVisible = true
+	self.inTouch = true
+	self.isUp = false
 	
 	timer.performWithDelay(self.delay, self, 1)	-- 0 means forever
 	
@@ -74,7 +81,7 @@ function cTextButton:timer(poEvent)
 	self.up.isVisible = true
 	self.down.isVisible = false
 	
-	self.inTap = false
+	self.inTouch = false
 	self.isUp = true
 	self:notify({name=self.eventName})
 end
