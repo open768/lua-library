@@ -36,7 +36,7 @@ function cClass.createInstance(poExemplar)
 	local oInstance
 	
 	if poExemplar ==nil then error ("cClass.CI no arguments")	end
-	if not poExemplar.className then	error ("cClass.CI: exemplar must have property className")	end
+	if poExemplar.className ==nil then	error ("cClass.CI: exemplar must have property className")	end
 	
 	cClass:debug(DEBUG__EXTRA_DEBUG, "cClass.CI create: ", poExemplar.className)
 	oInstance = {}
@@ -55,7 +55,7 @@ function cClass.addParent( poObj, poParent)
 	for sName,vValue in pairs(poParent) do
 		--if (type(vValue) == 'function') then
 		if poObj[sName] then
-			cClass:debug(DEBUG__DEBUG, "addParent: " , poObj.className, ".", sName , " exists - skipping")
+			cClass:debug(DEBUG__DEBUG, "addParent: " , poParent.className, ".", sName , " exists - skipping")
 		else
 			--self:debug(DEBUG__DEBUG, "cClass adding ", sName);
 			poObj[sName] = vValue
