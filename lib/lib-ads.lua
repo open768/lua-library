@@ -7,6 +7,7 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 ads = require("ads")
 
 cAds = {
+	className="cAds",
 	sType = nil, aArgs=nil, 
 	showDelay=10000, hideDelay=20000,
 	whichWay = "portrait",
@@ -14,13 +15,14 @@ cAds = {
 	adEvents = 0,
 	adEventThreshold = 3
 }
+cDebug.instrument(cAds)
 
 --TODO check device has capabilities
 -- *********************************************************
 -- shows and hides banner adds on a timer
 function cAds:init(psProvider, psType, paArgs)
 	if utility.isSimulator  then 
-		cDebug:print(DEBUG__WARN,"** Ads not available on simulator")
+		self:debug(DEBUG__WARN,"** Ads not available on simulator")
 		return
 	end
 	ads.init(psProvider, self.applicationID)	
@@ -38,7 +40,7 @@ end
 function cAds:orientation(poEvent)
 	if utility.isSimulator  then return end
 	
-	cDebug:print(DEBUG__INFO, "ads orientation:",poEvent.type)
+	self:debug(DEBUG__INFO, "ads orientation:",poEvent.type)
 	self.whichWay  = poEvent.type
 end
 

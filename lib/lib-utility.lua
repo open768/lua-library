@@ -6,6 +6,7 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 --]]
 local lfs = require "lfs"
 local msBreakChars ='({[ -%:;,.]})'
+if sprite == nil then require "sprite" end
 
 -- **********************************************************
 -- * UTILITY CLASS 
@@ -32,9 +33,6 @@ local moEffects ={
 -- # utility class methods
 -- ####################################################
 function utility:init() 
-	-- see 
-	-- http://developer.anscamobile.com/code/
-	-- calculating-actual-boundaries-your-application-and-device-screen-size#comment-81516
 	
 	self.Screen.x= display.screenOriginX
 	self.Screen.y= display.screenOriginY
@@ -241,6 +239,13 @@ function utility:moveToScreenCentre(poObj)
 	poObj:setReferencePoint(display.CenterReferencePoint)
 	poObj.x = self.Screen.Centre.x 
 	poObj.y = self.Screen.Centre.y 
+end
+
+function utility.moveRelative(poObj1, psRef1, poObj2, psRef2, piDx, piDy)
+	poObj1:setReferencePoint(psRef1)
+	poObj2:setReferencePoint(psRef2)
+	poObj2.x = poObj1.x + piDx
+	poObj2.y = poObj1.y + piDy
 end
 
 -- **********************************************************

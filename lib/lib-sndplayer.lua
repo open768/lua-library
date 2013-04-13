@@ -5,32 +5,20 @@ Absolutely no warranties or guarantees given or implied - use at your own risk
 Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
 --]]
 cSoundPlayer = 	{ eventName = "onComplete", className="cSoundPlayer"}
+cLibEvents.instrument(cSoundPlayer)
+cDebug.instrument(cSoundPlayer)
+
 require "inc.lib.lib-class"
+require "inc.lib.lib-stack"
 
---TBD remove listener and use events
-
-function cSoundPlayer:play(paFiles, poListener, pbLooped)
-	local oInstance = cClass.createInstance(self)
-	
-	oInstance.files=paFiles
-	oInstance.nowPlaying = 0
-	oInstance.handle = nil
-	oInstance.listener = poListener 
-	oInstance.stopped = false
-	oInstance.channel = nil
-	oInstance.looped = pbLooped
-	
-	oInstance:_playInSeq(1)
-
-	return oInstance
-end
-
---*******************************************************
-function cSoundPlayer:_playInSeq(piIndex)
+--########################################################
+--# PRIVATE
+--########################################################
+function cSoundPlayer:prv_playInSeq(piIndex)
 	local fnCallback
 	
 	if not self.files then
-		cDebug:throw("no Files to play")
+		self:throw("no Files to play")
 	end
 	
 	if self.stopped then return end
@@ -43,7 +31,45 @@ function cSoundPlayer:_playInSeq(piIndex)
 	self.alChannel, self.alSource = audio.play(self.handle, {onComplete=fnCallback, channel=self.channel})
 end
 
+--########################################################
+--# PUBLIC
+--########################################################
+function cSoundPlayer:create(paFiles)
+	local oInstance = cClass.createInstance(self)
+	
+	oInstance.files=paFiles
+	oInstance.nowPlaying = 0
+	oInstance.handle = nil
+	oInstance.stopped = false
+	oInstance.channel = nil
+	oInstance.looped = false
+	oInstance.autoClear = true
+	
+	return oInstance
+end
+
 --*******************************************************
+function cSoundPlayer:play()
+	self:prv_playInSeq(1)
+end
+
+--*******************************************************
+function cSoundPlayer:preload()
+	self:debug(DEBUG__WARN, "preload not implemented")
+end
+
+--*******************************************************
+function cSoundPlayer:stop()
+	if self.channel then
+		self:debug(DEBUG__INFO, "stopping sounds on channel ",self.channel)
+		self.stopped = true
+		audio.stop(self.channel)
+	end
+end
+
+--########################################################
+--# EVENTS
+--########################################################
 function cSoundPlayer:onComplete(poEvent)
 	local oListener
 	-- clear out the previous audio
@@ -54,38 +80,25 @@ function cSoundPlayer:onComplete(poEvent)
 	self.alSource = nil
 	
 	-- bomb out if stopped
-	if self.stopped then return end
+	if not poEvent.completed then 
+		self.stopped = false
+		return 
+	end
 	
 	--
 	if (self.nowPlaying < #(self.files)) then
-		self:_playInSeq(self.nowPlaying + 1 )
+		self:prv_playInSeq(self.nowPlaying + 1 )
 	else
 		if self.looped then
-			self:_playInSeq(1)
+			self:prv_playInSeq(1)
 			return
 		else
-			-- tbd 
-			if (self.listener ) then
-				self.files=nil
-				if type(self.listener) == "function" then
-					self.listener(poEvent)
-				else
-					self.listener:onComplete()
-				end
-				self.listener = nil
-			end
+			self:debug(DEBUG__EXTRA_DEBUG, "notifying: ",self.eventName)
+			self:notify({ name=self.eventName })
 
 			-- clear out the 
-			self.files = nil
+			if self.autoClear  then self.files = nil end
 		end
 	end
 end
 
---*******************************************************
-function cSoundPlayer:stop()
-	if self.channel then
-		cDebug:print(DEBUG__INFO, "stopping sounds on channel ",self.channel)
-		self.stopped = true
-		audio.stop(self.channel)
-	end
-end

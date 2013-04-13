@@ -4,9 +4,10 @@ This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unport
 Absolutely no warranties or guarantees given or implied - use at your own risk
 Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
 --]]
-require ("inc.lib.lib-debug")
+if not cDebug then error "cDebug object not found" end
 
 cClass = {className = "cClass"}
+cDebug.instrument(cClass)
 
 --***********************************************************
 --sets the index function to be the same of another table - thus inheritance
@@ -21,7 +22,7 @@ function cClass.createGroupInstance(poExemplar)
 	if poExemplar==nil then	error ("cClass.CGI no arguments")	end
 	if not poExemplar.className then error ("cClass.CGI :exemplar must have property className")	end
 	
-	cDebug:print(DEBUG__EXTRA_DEBUG, "cClass.CGI create: ", poExemplar.className)
+	cClass:debug(DEBUG__EXTRA_DEBUG, "cClass.CGI create: ", poExemplar.className)
 	oInstance = display.newGroup()
 	cClass.addParent(oInstance, poExemplar)
 	oInstance.className = poExemplar.className
@@ -37,7 +38,7 @@ function cClass.createInstance(poExemplar)
 	if poExemplar ==nil then error ("cClass.CI no arguments")	end
 	if not poExemplar.className then	error ("cClass.CI: exemplar must have property className")	end
 	
-	cDebug:print(DEBUG__EXTRA_DEBUG, "cClass.CI create: ", poExemplar.className)
+	cClass:debug(DEBUG__EXTRA_DEBUG, "cClass.CI create: ", poExemplar.className)
 	oInstance = {}
 	oInstance.className = poExemplar.className
 	cClass.setParent ( oInstance , poExemplar )  
@@ -54,9 +55,9 @@ function cClass.addParent( poObj, poParent)
 	for sName,vValue in pairs(poParent) do
 		--if (type(vValue) == 'function') then
 		if poObj[sName] then
-			cDebug:print(DEBUG__DEBUG, "addParent: " , poObj.className, ".", sName , " exists - skipping")
+			cClass:debug(DEBUG__DEBUG, "addParent: " , poObj.className, ".", sName , " exists - skipping")
 		else
-			--cDebug:print(DEBUG__DEBUG, "cClass adding ", sName);
+			--self:debug(DEBUG__DEBUG, "cClass adding ", sName);
 			poObj[sName] = vValue
 		end
     end

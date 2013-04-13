@@ -11,6 +11,7 @@ require "inc.lib.lib-class"
 
 cToggleWidget = { group=nil, untoggledImg=nil, toggledImage=nil, paused=false, className="cToggleWidget"}
 cLibEvents.instrument(cToggleWidget)
+cDebug.instrument(cToggleWidget)
 
 --*******************************************************
 function cToggleWidget:create( psSprite)
@@ -72,7 +73,7 @@ function cToggleWidget:tap(poEvent)
 	local bToggled
 	if self.paused then return end
 	
-	cDebug:print(DEBUG__DEBUG, "cToggleWidget:tap");
+	self:debug(DEBUG__DEBUG, "cToggleWidget:tap");
 	
 	bToggled = self:getToggled()
 	self:toggle(not bToggled)
@@ -88,7 +89,7 @@ function cToggleWidget:toggle(pbToggled)
 		bToggled = not self.toggledImage.isVisible
 	end
 		
-	cDebug:print(DEBUG__DEBUG, "cToggleWidget:toggling:",tostring(bToggled));
+	self:debug(DEBUG__DEBUG, "cToggleWidget:toggling:",tostring(bToggled));
 	self.toggledImage.isVisible = bToggled 
 	self.untoggledImg.isVisible = not bToggled 
 end

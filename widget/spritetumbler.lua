@@ -23,6 +23,7 @@ cSpriteTumber = {
 	timerID = nil
 }
 cLibEvents.instrument(cSpriteTumber)
+cDebug.instrument(cSpriteTumber)
 
 --*******************************************************
 function cSpriteTumber:create( psFile, piW, piH, piMaxSpriteFrames, piMaxSprites)
@@ -214,7 +215,7 @@ function cTumblingSprite:enterFrame(event)
 	local bResult
 	
 	if self.parent.stopping then
-		cDebug:print(DEBUG__EXTRA_DEBUG, "killing tumbling sprite")
+		self:debug(DEBUG__EXTRA_DEBUG, "killing tumbling sprite")
 		Runtime:removeEventListener( "enterFrame", self )	
 	end
 	

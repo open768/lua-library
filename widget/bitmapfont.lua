@@ -17,6 +17,8 @@ cBitmapFont = {
 	debug=false,
 	className="cBitmapFont"
 }
+cDebug.instrument(cBitmapFont)
+
 
 --paCharMapping is an array of chars
 -- {A={ ref=spritename, dx_pre=pixels, dy_post=val, dy=val}, ... }
@@ -26,9 +28,9 @@ cBitmapFont = {
 function cBitmapFont:create(psSpriteFile, poSpriteData, paCharMapping)
 	local oInstance = cClass.createInstance(self)
 	
-	if (psSpriteFile==nil) then cDebug:throw ("no sprite file") end
-	if (poSpriteData==nil) then cDebug:throw ("no sprite data") end
-	if (paCharMapping==nil) then cDebug:throw ("no character mapping") end
+	if (psSpriteFile==nil) then self:throw ("no sprite file") end
+	if (poSpriteData==nil) then self:throw ("no sprite data") end
+	if (paCharMapping==nil) then self:throw ("no character mapping") end
 	
 	oInstance:init(psSpriteFile, poSpriteData, paCharMapping)
 	return oInstance 
@@ -40,10 +42,10 @@ function cBitmapFont:init(psSpriteFile, poSpriteData, paCharMapping)
 	
 	-- load the spritesheet
 	oSpriteData = poSpriteData.getSpriteSheetData() 
-	if (oSpriteData  == nil) then cDebug:throw  ("no Spritesheetdata") end
+	if (oSpriteData  == nil) then self:throw("no Spritesheetdata") end
 	
 	oSheet = sprite.newSpriteSheetFromData( psSpriteFile, oSpriteData )
-	if (oSheet == nil) then cDebug:throw ("bad spritesheet") end
+	if (oSheet == nil) then self:throw ("bad spritesheet") end
 	self.spriteSheet = oSheet
 
 	-- build a spriteset for each character
@@ -67,16 +69,16 @@ end
 function cBitmapFont:checkValidMapping(paCharMapping)
 	local oRow, sKey, oValue
 	
-	if type(paCharMapping) ~= "table" then cDebug:throw("not a table") end
+	if type(paCharMapping) ~= "table" then self:throw("not a table") end
 	
 	for sKey,oValue in pairs(paCharMapping) do
-		if sKey == nil then cDebug:throw  ("bad mapping - key missing") end
-		if oValue == nil then cDebug:throw  ("bad mapping - mapping missing for "..sKey) end
+		if sKey == nil then self:throw("bad mapping - key missing") end
+		if oValue == nil then self:throw("bad mapping - mapping missing for "..sKey) end
 		
-		if oValue.ref == nil then cDebug:throw  ("bad mapping - ref missing for "..sKey) end
-		if oValue.dx_pre == nil then cDebug:throw  ("bad mapping - dx_pre missing for "..sKey) end
-		if oValue.dx_post == nil then cDebug:throw  ("bad mapping - dx_post missing for "..sKey) end
-		if oValue.dy == nil then cDebug:throw  ("bad mapping - dy missing for "..sKey) end
+		if oValue.ref == nil then self:throw("bad mapping - ref missing for "..sKey) end
+		if oValue.dx_pre == nil then self:throw("bad mapping - dx_pre missing for "..sKey) end
+		if oValue.dx_post == nil then self:throw("bad mapping - dx_post missing for "..sKey) end
+		if oValue.dy == nil then self:throw("bad mapping - dy missing for "..sKey) end
 	end
 end
 
@@ -85,7 +87,7 @@ function cBitmapFont:newText(psString)
 	local oGroup
 	local iX, iLen, iIndex, cCh, oSprite, oMap
 	
-	if type(psString) ~= 'string' then cDebug:throw  ("not a string") end
+	if type(psString) ~= 'string' then self:throw("not a string") end
 	
 	-- set up the parent group
 	oGroup = display.newGroup()
@@ -134,14 +136,14 @@ function cBitmapFont:_pGetSprite(pcChar)
 	-- -- get the mapping
 	oMap = self.charMapping[pcChar]
 	if oMap == nil then
-		cDebug:print(DEBUG__ERROR, "Char ",pcChar," mapping is not defined")
+		self:debug(DEBUG__ERROR, "Char ",pcChar," mapping is not defined")
 		return nil
 	end
 	
 	-- -- find the spriteset
 	oSet = self.spriteSets[oMap.ref]
 	if oSet == nil then 
-		cDebug:print(DEBUG__ERROR, "no sprite with ref ",oMap.ref)
+		self:debug(DEBUG__ERROR, "no sprite with ref ",oMap.ref)
 		return nil
 	end
 	

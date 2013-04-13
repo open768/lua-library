@@ -11,6 +11,7 @@ local json = require "json"
 -- * UTILITY CLASS 
 -- **********************************************************
 cJson = {}
+-- cant instrument cDebug as cDebug uses this indirectly
 
 -- *********************************************************
 -- adapted from 

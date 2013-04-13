@@ -21,12 +21,13 @@ cWarning = {
 	sound = "audio/traffic/caroops.mp3"
 }
 cLibEvents.instrument(cWarning)
+cDebug.instrument(cWarning)
 
 --*******************************************************
 function cWarning:show(psMsg, psEvent, poListener)
 	local oWarning
 	
-	cDebug:print(DEBUG__DEBUG, "showing warning: ", psMsg)
+	self:debug(DEBUG__DEBUG, "showing warning: ", psMsg)
 
 	oWarning = cWarning:prv_create()
 	if psEvent ~= nil then
@@ -99,7 +100,7 @@ function cWarning:prv__init(psText)
 	
 	-- run the anim
 	self.inAnim = true
-	cDebug:print(DEBUG__DEBUG, "starting animation");
+	self:debug(DEBUG__DEBUG, "starting animation");
 	oAnim:go()
 end
 
@@ -113,7 +114,7 @@ end
 
 --*******************************************************
 function cWarning:prv__onClose()
-	cDebug:print(DEBUG__DEBUG, "closed warning");
+	self:debug(DEBUG__DEBUG, "closed warning");
 	self.inAnim = false
 	self:notify({name=self.onClosedEvent})
 	self:removeSelf()
@@ -121,7 +122,7 @@ end
 
 --*******************************************************
 function cWarning:prv__onShow()
-	cDebug:print(DEBUG__DEBUG, "displayed warning");
+	self:debug(DEBUG__DEBUG, "displayed warning");
 	self.inAnim = false
 end
 
@@ -129,7 +130,7 @@ end
 function cWarning:prv__close()
 	local oAnim
 	
-	cDebug:print(DEBUG__DEBUG, "closing");
+	self:debug(DEBUG__DEBUG, "closing");
 	
 	-- set up the animation sequence to bring the warning to the middle of the screen
 	oAnim = cAnimator:create()

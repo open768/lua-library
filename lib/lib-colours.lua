@@ -8,6 +8,7 @@ require "inc.lib.lib-hex"
 
 cColours = 
 {
+	className="cColours",
 	aliceblue="f0f8ff",antiquewhite="faebd7",aqua="00ffff",aquamarine="7fffd4",azure="f0ffff",	
 	beige="f5f5dc",bisque="ffe4c4",	black="000000",blanchedalmond="ffebcd",blue="0000ff",
 	blueviolet="8a2be2",brown="a52a2a",burlywood="deb887",cadetblue="5f9ea0",chartreuse="7fff00",
@@ -40,16 +41,17 @@ cColours =
 	tan="d2b48c",teal="008080",thistle="d8bfd8",tomato="ff6347",turquoise="40e0d0",
 	violet="ee82ee",wheat="f5deb3",white="ffffff",whitesmoke="f5f5f5",yellow="ffff00",
 	yellowgreen="9acd32" }  
+cDebug.instrument(cColours)
  
 --******************************************************* 
 function cColours:getRGB(psColour) 
 	local sRGB, sR, sG, sB
 	
-	if psColour ==nil then cDebug:throw ("cColours:getRGB missing colour name") end
+	if psColour ==nil then self:throw ("cColours:getRGB missing colour name") end
 	
 	sRGB = self[psColour]
 	if not sRGB then
-		cDebug:throw("no such colour : "..psColour); 
+		self:throw("no such colour : "..psColour); 
 	end
 	
 	iR = hex_dec(sRGB:sub(1,2))

@@ -12,6 +12,7 @@ local http = require("socket.http")
 local ltn12 = require("ltn12")
 
 cHttp = {
+	className="cHttp",
 	reachableDomain="www.bbc.co.uk",
 	isNetReachable = false,
 	testMode = false,
@@ -23,6 +24,8 @@ cHttp = {
 	forceUserAgent = nil,
 	userAgent = nil
 }
+cDebug.instrument(cHttp)
+
 
 -- **********************************************************
 function cHttp:init()
@@ -31,7 +34,7 @@ function cHttp:init()
 		network.setStatusListener( self.reachableDomain, fnCallBack )
 	else
 		self:checkConnectivity()
-		cDebug:print(DEBUG__INFO, "cHttp: Net is reachable: ", self.isNetReachable)
+		self:debug(DEBUG__INFO, "Net is reachable: ", self.isNetReachable)
 	end
 end
 
@@ -39,7 +42,7 @@ end
 function cHttp:checkConnectivity()
 	local oResponse = http.request("http://"..self.reachableDomain.."/")
 	self.isNetReachable = (oResponse ~= nil)
-	cDebug:print(DEBUG__INFO, "cHttp: checkConnectivity Net is reachable: ", self.isNetReachable)
+	self:debug(DEBUG__INFO, "checkConnectivity Net is reachable: ", self.isNetReachable)
 	
 	return self.isNetReachable
 end
@@ -50,9 +53,9 @@ function cHttp:get(psUrl)
 	local rCode,rCount,rHeaders, iLen
 	
 	if not psUrl then
-		cDebug:throw("cHttp:get -- No Url")
+		cDebug:throw("get -- No Url")
 	end
-	cDebug:print(DEBUG__INFO, "cHttp: URL:", psUrl)
+	self:debug(DEBUG__INFO, "URL:", psUrl)
 	
 	oSink = {}
 	rCode,rCount,rHeaders = http.request	({
@@ -65,13 +68,13 @@ function cHttp:get(psUrl)
 		userAgent=self:getUserAgent()
 	})
 	sResponse = table.concat(oSink)
-	cDebug:print(DEBUG__DEBUG, "cHttp: response=",sResponse)
-	cDebug:print(DEBUG__DEBUG, "cHttp: headers=",rHeaders)
-	cDebug:print(DEBUG__DEBUG, "cHttp: code=",rCode)
+	self:debug(DEBUG__DEBUG, "response=",sResponse)
+	self:debug(DEBUG__DEBUG, "headers=",rHeaders)
+	self:debug(DEBUG__DEBUG, "code=",rCode)
 	
 	iLen = rHeaders["content-length"] + 0
 	if iLen == 0 then
-		cDebug:print(DEBUG__ERROR, "no data returned")
+		self:debug(DEBUG__ERROR, "no data returned")
 		sResponse = nil
 	end
 	return sResponse
@@ -118,13 +121,13 @@ function cHttp:getUserAgent()
 	if self.forceUserAgent then
 		sUserAgent = self.forceUserAgent 
 		self.forceUserAgent  = nil
-		cDebug:print(DEBUG__INFO, "cHttp: forced useragent=",sUserAgent )
+		self:debug(DEBUG__INFO, "forced useragent=",sUserAgent )
 		return sUserAgent 
 	end
 	
 	-- returned remembered useragent if there
 	if self.userAgent then
-		cDebug:print(DEBUG__INFO, "cHttp: useragent=",sUserAgent )
+		self:debug(DEBUG__INFO, "useragent=",sUserAgent )
 		return self.userAgent 
 	end
 	
@@ -151,7 +154,7 @@ function cHttp:getUserAgent()
 	-- remember the useragent
 	self.userAgent = sUserAgent
 	
-	cDebug:print(DEBUG__INFO, "cHttp: useragent=",sUserAgent )
+	self:debug(DEBUG__INFO, "useragent=",sUserAgent )
 	return sUserAgent 
 end
 

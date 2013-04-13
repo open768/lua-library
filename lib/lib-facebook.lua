@@ -24,6 +24,7 @@ local FB_IS_AUTHORISED_KEY = "fbiak"
  --#
  --#################################################################
  cFacebook = { 
+	className="cFacebook",
 	errorEventName="onFBError",
 	loginEventName="onFBLogin",
 	requestEventName="onFBRequest",
@@ -34,6 +35,7 @@ local FB_IS_AUTHORISED_KEY = "fbiak"
 	min_time = 100, max_time = 200
 }
 cLibEvents.instrument(cFacebook)
+cDebug.instrument(cFacebook)
 
  --#################################################################
  --#
@@ -42,7 +44,7 @@ function cFacebook:login(psAppID)
 	local oEvent
 	
 	if utility.isSimulator() then
-		cDebug:print(DEBUG__WARN, "cFacebook simulating login")
+		self:debug(DEBUG__WARN, "simulating login")
 		oEvent = {
 			name = "onFBEvent",
 			type = "session",
@@ -58,28 +60,28 @@ function cFacebook:login(psAppID)
 		self.fnClosure  = cLibEvents.makeEventClosure(self,"onFBEvent")
 	end
 
-	cDebug:print(DEBUG__DEBUG, "attempt login requesting publish_stream")
+	self:debug(DEBUG__DEBUG, "attempt login requesting publish_stream")
 	facebook.login( psAppID, self.fnClosure, {"publish_stream"}  )
 end
 
 --******************************************************************
 function cFacebook:logout()
 	if not self.loggedIn then
-		cDebug:print(DEBUG__DEBUG, "not logged in")
+		self:debug(DEBUG__DEBUG, "not logged in")
 		return
 	end
 
 	if utility.isSimulator() then
 		local oEvent = {}
 		
-		cDebug:print(DEBUG__WARN, "cFacebook simulating logout")
+		self:debug(DEBUG__WARN, "simulating logout")
 		oEvent.type = "session"
 		oEvent.phase = "logout"
 		
 		self:prv__onSimulatedFBEvent(oEvent)
 		return
 	else
-		cDebug:print(DEBUG__DEBUG, "cFacebook making fb logout request")
+		self:debug(DEBUG__DEBUG, "making fb logout request")
 		facebook.logout()
 	end
 end
@@ -87,24 +89,24 @@ end
 --******************************************************************
 function cFacebook:post(psGraphID, poParams)
 	if not self.loggedIn then
-		cDebug:throw("cFacebook - not logged in")
+		self:throw("cFacebook - not logged in")
 	end
 	
-	cDebug:print(DEBUG__DEBUG, "cFacebook post request  ",psGraphID)
+	self:debug(DEBUG__DEBUG, "post request  ",psGraphID)
 	self.FBResponse = nil
 	
 	if (poParams == nil) then 
-		cDebug:print(DEBUG__WARN, "cFacebook post no params provided")
+		self:debug(DEBUG__WARN, "post no params provided")
 		poParams = {} 
 	end
 
 	if utility.isSimulator() then
 		local oEvent = {}
 		
-		cDebug:print(DEBUG__WARN, "cFacebook simulating post")
+		self:debug(DEBUG__WARN, "simulating post")
 		
 		if self.simulate_error then
-			cDebug:print(DEBUG__WARN, "simulating error request")
+			self:debug(DEBUG__WARN, "simulating error request")
 			self.simulate_error = false
 			oEvent.response = json.encode({error={message="(#506) Duplicate status message",type="OAuthException",code=506}})
 		elseif self.sim_bool_return then
@@ -116,23 +118,23 @@ function cFacebook:post(psGraphID, poParams)
 		oEvent.type = "request"
 		self:prv__onSimulatedFBEvent(oEvent)
 	else
-		cDebug:print(DEBUG__DEBUG, "cFacebook making fb request")
+		self:debug(DEBUG__DEBUG, "making fb request")
 		facebook.request( psGraphID, "POST", poParams) 
 	end
 end
 
 --******************************************************************
 function cFacebook:request(psGraphID)
-	cDebug:print(DEBUG__DEBUG, "cFacebook request ",psGraphID)
+	self:debug(DEBUG__DEBUG, "request ",psGraphID)
 	self.FBResponse = nil
 	
 	if utility.isSimulator() then
 		local oEvent = {}
 		
-		cDebug:print(DEBUG__WARN, "cFacebook simulating request")
+		self:debug(DEBUG__WARN, "simulating request")
 		oEvent.type = "request"
 		if self.simulate_error then
-			cDebug:print(DEBUG__WARN, "simulating error request")
+			self:debug(DEBUG__WARN, "simulating error request")
 			self.simulate_error = false
 			oEvent.response = json.encode({error={message="simulated error"}})
 		elseif self.sim_bool_return then
@@ -154,13 +156,13 @@ function cFacebook:like(psGraphID)
 	if utility.isSimulator() then
 		self.sim_bool_return = true
 	end
-	cDebug:print(DEBUG__DEBUG, "cFacebook:like", psGraphID)
+	self:debug(DEBUG__DEBUG, "like", psGraphID)
 	self:post(psGraphID.."/likes")
 end
 
 --******************************************************************
 function cFacebook:comment(psGraphID, psMessage)
-	cDebug:print(DEBUG__DEBUG, "cFacebook:comment", psGraphID)
+	self:debug(DEBUG__DEBUG, "comment", psGraphID)
 	self:post(psGraphID.."/comments", { message=psMessage} )
 end
 
@@ -168,13 +170,13 @@ end
 --note params can include 
 -- message, picture, link, name, caption, description, source, place, tags
 function cFacebook:postToWall(pvArg)
-	cDebug:print(DEBUG__DEBUG, "cFacebook:postToWall")
+	self:debug(DEBUG__DEBUG, "postToWall")
 	
 	if type(pvArg) == "string" then
-		cDebug:print(DEBUG__DEBUG, "-- simple string", pvArg)
+		self:debug(DEBUG__DEBUG, "-- simple string", pvArg)
 		self:post("me/feed", { message=pvArg} )
 	else
-		cDebug:print(DEBUG__DEBUG, "-- complex - table")
+		self:debug(DEBUG__DEBUG, "-- complex - table")
 		self:post("me/feed", pvArg )
 	end
 end
@@ -186,17 +188,17 @@ end
  function cFacebook:onFBEvent(poEvent)
 	local bOK, sErr
 	
-	cDebug:print(DEBUG__DEBUG, "cFacebook:onFBEvent")
-	cDebug:print(DEBUG__EXTRA_DEBUG, json.encode(poEvent))
+	self:debug(DEBUG__DEBUG, "onFBEvent")
+	self:debug(DEBUG__EXTRA_DEBUG, json.encode(poEvent))
 	
 	if  (poEvent.type == "session") then
-		cDebug:print(DEBUG__DEBUG, "login event")
+		self:debug(DEBUG__DEBUG, "login event")
 		self:prv__onFBLogin(poEvent)
 	elseif (poEvent.type == "request") then
-		cDebug:print(DEBUG__DEBUG, "request event")
+		self:debug(DEBUG__DEBUG, "request event")
 		self:prv__onFBRequest(poEvent)
 	else
-		cDebug:print(DEBUG_ERROR, "unknown event type:", poEvent.type)
+		self:debug(DEBUG_ERROR, "unknown event type:", poEvent.type)
 	end
 end
  
@@ -207,16 +209,16 @@ function cFacebook:prv__onSimulatedFBEvent(poEvent)
 	local fnClosure, iRnd
 	
 	iRnd = math.random(self.min_time,self.max_time)
-	cDebug:print(DEBUG__DEBUG, "cFacebook:onSimulatedFBEvent - ", iRnd, "delay")
+	self:debug(DEBUG__DEBUG, "onSimulatedFBEvent - ", iRnd, "delay")
 	fnClosure = function() self:onFBEvent(poEvent) end
 	timer.performWithDelay(iRnd, fnClosure)
 end
  
 --******************************************************************
 function cFacebook:prv__onFBLogin(poEvent)
-	cDebug:print(DEBUG__DEBUG, "cFacebook:onFBlogin")
+	self:debug(DEBUG__DEBUG, "onFBlogin")
 	if poEvent.phase == "login" then
-		cDebug:print(DEBUG__INFO, "cFacebook: login OK")
+		self:debug(DEBUG__INFO, "login OK")
 		
 		cSettings:set(FB_TOKEN_KEY, poEvent.token)
 		cSettings:set(FB_TOKEN_EXPIRY_KEY, poEvent.expiration)
@@ -227,11 +229,11 @@ function cFacebook:prv__onFBLogin(poEvent)
 		
 		--login can be ok, without permissions - remember to check permissions next
 	elseif poEvent.phase == "logout" then
-		cDebug:print(DEBUG__INFO, "cFacebook: logged out")
+		self:debug(DEBUG__INFO, "logged out")
 		self.loggedIn = false
 		poEvent.name = self.loginEventName
 	else
-		cDebug:print(DEBUG__ERROR, "cFacebook: login Failed")
+		self:debug(DEBUG__ERROR, "login Failed")
 		poEvent.name = self.errorEventName
 	end	
 	
@@ -243,17 +245,17 @@ function cFacebook:prv__onFBLogin(poEvent)
 function cFacebook:prv__onFBRequest(poEvent)
 	local oResponse
 	
-	cDebug:print(DEBUG__DEBUG, "cFacebook:onFBRequest")
+	self:debug(DEBUG__DEBUG, "onFBRequest")
 	
 	if poEvent.response then
-		cDebug:print(DEBUG__DEBUG, "response:",poEvent.response)
+		self:debug(DEBUG__DEBUG, "response:",poEvent.response)
 		poEvent.response = json.decode(poEvent.response)
 	else
-		cDebug:print(DEBUG__DEBUG, "no response content")
+		self:debug(DEBUG__DEBUG, "no response content")
 	end
 	
 	if poEvent.isError then
-		cDebug:print(DEBUG__ERROR, "request Failed")
+		self:debug(DEBUG__ERROR, "request Failed")
 		self.label.text = "request failed"
 		
 		poEvent.name = self.errorEventName
@@ -262,15 +264,15 @@ function cFacebook:prv__onFBRequest(poEvent)
 	else
 		if (type(poEvent.response) == "table") then
 			if (poEvent.response.error) then
-				cDebug:print(DEBUG__ERROR, "request failed")
-				cDebug:print(DEBUG__ERROR, poEvent.response.error.message)
+				self:debug(DEBUG__ERROR, "request failed")
+				self:debug(DEBUG__ERROR, poEvent.response.error.message)
 				poEvent.name = self.errorEventName
 				self:notify(poEvent)
 				return
 			end
 		end 
 		
-		cDebug:print(DEBUG__DEBUG, "request ok")
+		self:debug(DEBUG__DEBUG, "request ok")
 				
 		poEvent.name = self.requestEventName
 		self:notify(poEvent)

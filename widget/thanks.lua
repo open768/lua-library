@@ -18,6 +18,7 @@ cThanks = {
 	sound = "audio/traffic/beepbeep.mp3"
 }
 cLibEvents.instrument(cThanks)
+cDebug.instrument(cThanks)
 
 --*******************************************************
 function cThanks:show(psMsg, psEvent, poListener)
@@ -88,7 +89,7 @@ function cThanks:prv__init()
 	
 	-- run the anim
 	self.inAnim = true
-	cDebug:print(DEBUG__DEBUG, "starting animation");
+	self:debug(DEBUG__DEBUG, "starting animation");
 	oAnim:go()
 end
 
@@ -102,7 +103,7 @@ end
 
 --*******************************************************
 function cThanks:prv__onClose()
-	cDebug:print(DEBUG__DEBUG, "closed thanks");
+	self:debug(DEBUG__DEBUG, "closed thanks");
 	self.inAnim = false
 	self:notify({name=self.onClosedEvent})
 	self:removeSelf()
@@ -110,7 +111,7 @@ end
 
 --*******************************************************
 function cThanks:prv__onShow()
-	cDebug:print(DEBUG__DEBUG, "displayed thanks");
+	self:debug(DEBUG__DEBUG, "displayed thanks");
 	self.inAnim = false
 end
 
@@ -118,7 +119,7 @@ end
 function cThanks:prv__close()
 	local oAnim
 	
-	cDebug:print(DEBUG__DEBUG, "closing");
+	self:debug(DEBUG__DEBUG, "closing");
 	
 	-- set up the animation sequence to bring the warning to the middle of the screen
 	oAnim = cAnimator:create()

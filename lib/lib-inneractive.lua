@@ -30,6 +30,7 @@ end
 --#
 --########################################################################
 cInnerActive = {
+	className="cInnerActive",
 	applicationID= "not set",
 	adBorder=0,
 	fullScreenAd = nil,
@@ -43,6 +44,7 @@ cInnerActive = {
 	version = "Sm2m-1.5.3"
 }
 cLibEvents.instrument(cInnerActive)
+cDebug.instrument(cInnerActive)
 
 -- *********************************************************
 function cInnerActive:showFullScreenAd(psAid, poGroup)
@@ -93,7 +95,7 @@ function cInnerActive:_buildUrl( poArgs )
 		sUrl = sUrl.."&fs=true"
 	end
 	
-	cDebug:print(DEBUG__INFO, "inneractive URL - ",sUrl)
+	self:debug(DEBUG__INFO, "inneractive URL - ",sUrl)
 	
 	return sUrl
 end
@@ -106,7 +108,7 @@ function cInnerActive:prv__fetchAd(psUrl)
 	cHttp.forceUserAgent = self.forceUserAgent
 	sXML = cHttp:get(psUrl)
 	if sXML == nil then
-		cDebug:print(DEBUG__ERROR, "no ad returned")
+		self:debug(DEBUG__ERROR, "no ad returned")
 		return nil
 	end
 	
@@ -128,9 +130,9 @@ function cInnerActive:prv__fetchAd(psUrl)
 		cSettings:commit()
 	end
 	
-	cDebug:print(DEBUG__INFO, "next CID = ", oData.CID)
-	cDebug:print(DEBUG__INFO, "Adurl:",oData.clickUrl)
-	cDebug:print(DEBUG__INFO, "Adimg:",oData.imageUrl)
+	self:debug(DEBUG__INFO, "next CID = ", oData.CID)
+	self:debug(DEBUG__INFO, "Adurl:",oData.clickUrl)
+	self:debug(DEBUG__INFO, "Adimg:",oData.imageUrl)
 	
 	return oData
 end
@@ -142,22 +144,22 @@ function cInnerActive:getFullScreenAd()
 	
 	-- check status of net 
 	if not cHttp.isNetReachable then 
-		cDebug:print(DEBUG__INFO, "not displaying ads - net unreachable")
+		self:debug(DEBUG__INFO, "not displaying ads - net unreachable")
 		return 
 	end
-	cDebug:print(DEBUG__INFO, "net reachable - displaying ad")
+	self:debug(DEBUG__INFO, "net reachable - displaying ad")
 	
 	-- how big and wide
 	iw = utility.Screen.w - 2*self.adBorder
 	ih = utility.Screen.h - 2*self.adBorder
 	
 	--build the URL
-	cDebug:print(DEBUG__INFO, "about to get ad")
+	self:debug(DEBUG__INFO, "about to get ad")
 	sUrl = self:_buildUrl( {w=iw, h=ih, fullScreen=true})
 	self.adData = self:prv__fetchAd(sUrl)
 	if self.adData then
 		-- load the ad image
-		cDebug:print(DEBUG__INFO, "about to load image")
+		self:debug(DEBUG__INFO, "about to load image")
 		pFnCallback = cLibEvents.makeEventClosure(self, "onLoadRemoteImage")
 		display.loadRemoteImage( self.adData.imageUrl, "GET", pFnCallback, self.remoteImageFile )
 	end
@@ -169,14 +171,14 @@ function cInnerActive:onLoadRemoteImage(poEvent)
 	
 	-- remove previous ad
 	if self.fullScreenAd then
-		cDebug:print(DEBUG__INFO, "removing old ad")
+		self:debug(DEBUG__INFO, "removing old ad")
 		self.fullScreenAd:removeEventListener( "tap", self)
 		self.fullScreenAd:removeSelf()
 		self.fullScreenAd = nil
 	end
 
 	--remember the image
-	cDebug:print(DEBUG__INFO, "ad image loaded")
+	self:debug(DEBUG__INFO, "ad image loaded")
 	oImg = poEvent.target
 	self.fullScreenAd = oImg
 	
@@ -190,7 +192,7 @@ end
 
 -- *********************************************************
 function cInnerActive:tap(poEvent)
-	cDebug:print(DEBUG__INFO, "ad touched:")
+	self:debug(DEBUG__INFO, "ad touched:")
 	system.openURL(self.adData.clickUrl)
 end
 

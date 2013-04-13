@@ -1,8 +1,12 @@
--- VERSION
+--[[
+ VERSION
 -- -- This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
 -- -- http://creativecommons.org/licenses/by-sa/3.0/
 -- -- Absolutely no warranties or guarantees given or implied - use at your own risk
 -- -- Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
+
+for vardump require "inc.3lib.vardump"
+--]]
 
 local lfs = require "lfs"
 require "inc.lib.lib-settings"
@@ -83,6 +87,95 @@ function cDebug.toString(...)
 end
 
 -- **********************************************************
+function cDebug.instrument(poObj)
+	if not poObj then
+		cDebug:throw("object not instrumentable")
+	end
+	
+	if poObj["debug"] then 
+		cDebug:throw("table allready instrumented")
+	end
+	if not poObj["className"] then 
+		cDebug:throw("cdebug:obj Missing Classname")
+	end
+	
+	poObj.debug=cDebug.prv_debug_print
+	poObj.throw=cDebug.prv_debug_throw
+end
+
+-- **********************************************************
+function cDebug:print(piLevel, ...)
+	local sDebugMsg, sDate, sText
+	local arg={...}
+	
+	if (piLevel == nil) then
+		error ("cDebug: piLevel is nil - check for typos")
+	end
+	if (piLevel > self.DEBUG_LEVEL) then return end
+
+	if  iLen == 0 then
+		sText = "No message to display"
+	else
+		sText = self.toString(...)
+	end
+	
+	sDate = os.date(self.dateFormat)
+		
+	sDebugMsg = aDebugLevels[piLevel]..": "..sDate..": "..sText 
+	
+	self:prv__print(sDebugMsg)
+	
+	if piLevel == DEBUG__ERROR then
+		sTraceback = cDebug.getTraceBack()
+		if sTraceback  then
+			self:prv__print(sTraceback )
+		end
+	end
+	
+end
+
+-- **********************************************************
+function cDebug:throw(...)
+	cDebug:print(DEBUG__ERROR, ...)
+	error(table.concat({...}," "))
+end
+
+-- **********************************************************
+function cDebug:getTraceBack()
+	local aStrings = {}
+    local iLevel = 0
+	local sLine, aInfo, sName, sSrc, sLineNo
+	
+	table.insert(aStrings, "***** start TRACEBACK *****")
+    while true do
+        aInfo = debug.getinfo(iLevel, "nSl")
+        if not aInfo  then break end
+		
+		sName = utility.defaultValue(aInfo.name, "unknown")
+		sLineNo= utility.defaultValue(aInfo.linedefined, "unknown")
+		sSrc = utility.defaultValue(aInfo.source, "unknown")
+		sLine = sName.. " at line "..sLineNo .." in "..sSrc
+		
+		if not string.find( sSrc, "debug") and (sName ~= "pcall") and (sName ~= "getinfo") then
+			table.insert(aStrings, sLine)
+		end
+		
+        iLevel = iLevel + 1
+    end	
+	table.insert(aStrings, "***** end TRACEBACK *****")
+	
+	return table.concat(aStrings ,"\n")
+end
+
+--########################################################
+--# PRIVATE
+--########################################################
+function cDebug:prv__print(psMsg)
+	print ("LOG:",psMsg )
+	self:prv_filePrint(psMsg)
+end
+
+-- **********************************************************
 function cDebug.prv__toString(pvWhat, piLevel)
 	local aStrings, i, sType, k,v
 
@@ -118,86 +211,7 @@ function cDebug.prv__toString(pvWhat, piLevel)
 end
 
 -- **********************************************************
-function cDebug:print(piLevel, ...)
-	local sDebugMsg, sDate, sText
-	local arg={...}
-	
-	if (piLevel == nil) then
-		error ("cDebug: piLevel is nil - check for typos")
-	end
-	if (piLevel > self.DEBUG_LEVEL) then return end
-
-	if  iLen == 0 then
-		sText = "No message to display"
-	else
-		sText = self.toString(...)
-	end
-	
-	sDate = os.date(self.dateFormat)
-		
-	sDebugMsg = aDebugLevels[piLevel]..": "..sDate..": "..sText 
-	
-	self:prv__print(sDebugMsg)
-	
-	if piLevel == DEBUG__ERROR then
-		sTraceback = cDebug.getTraceBack()
-		if sTraceback  then
-			self:prv__print(sTraceback )
-		end
-	end
-	
-end
-
--- **********************************************************
-function cDebug:prv__print(psMsg)
-	print ("LOG:",psMsg )
-	self:filePrint(psMsg)
-end
-
--- **********************************************************
-function cDebug:throw(...)
-	cDebug:print(DEBUG__ERROR, ...)
-	error(table.concat({...}," "))
-end
-
--- **********************************************************
-function cDebug:getTraceBack()
-	local aStrings = {}
-    local iLevel = 0
-	local sLine, aInfo, sName, sSrc, sLineNo
-	
-	table.insert(aStrings, "***** start TRACEBACK *****")
-    while true do
-        aInfo = debug.getinfo(iLevel, "nSl")
-        if not aInfo  then break end
-		
-		sName = utility.defaultValue(aInfo.name, "unknown")
-		sLineNo= utility.defaultValue(aInfo.linedefined, "unknown")
-		sSrc = utility.defaultValue(aInfo.source, "unknown")
-		sLine = sName.. " at line "..sLineNo .." in "..sSrc
-		
-		if not string.find( sSrc, "debug") and (sName ~= "pcall") and (sName ~= "getinfo") then
-			table.insert(aStrings, sLine)
-		end
-		
-		--[[
-		local sKey, oValue
-		sLine = ""
-		for sKey,oValue in pairs(aInfo) do
-			sLine = sLine.."\n"..sKey.."="..tostring(oValue)
-		end
-		table.insert(aStrings, sLine)
-		--]]
-		
-        iLevel = iLevel + 1
-    end	
-	table.insert(aStrings, "***** end TRACEBACK *****")
-	
-	return table.concat(aStrings ,"\n")
-end
-
--- **********************************************************
-function cDebug:filePrint(psMessage)
+function cDebug:prv_filePrint(psMessage)
 	local sFolderPath, sFilePath, sErr
 
 	if not self.writeToFile then
@@ -231,6 +245,19 @@ function cDebug:filePrint(psMessage)
 	self.filehandle:flush()
 end
 
+-- **********************************************************
+function cDebug.prv_debug_print(poObj, piLevel, ...)
+	cDebug:print(piLevel, poObj.className, ": ", ...)
+end
+
+-- **********************************************************
+function cDebug.prv_debug_throw(poObj,  ...)
+	cDebug:throw(poObj.className, ": ", ...)
+end
+
+--########################################################
+--# INIT
+--########################################################
 cDebug:loadState()
 print "##cDebug needs android permission android.permission.WRITE_EXTERNAL_STORAGE"
 

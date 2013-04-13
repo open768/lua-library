@@ -10,6 +10,7 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 
 require "inc.lib.lib-events"
 require "inc.lib.lib-class"
+if sprite == nil then require "sprite" end
 
 cDraggable = {delay=50, scrollX = true, scrollY = true, usePhysics = true, dragObj=nil, className="cDraggable"}
 cLibEvents.instrument(cDraggable)

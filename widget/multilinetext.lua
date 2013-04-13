@@ -15,6 +15,7 @@ cMultiLineText = {
 	defaultFontSize = 16, 
 	defaultAlign=1
 }
+cDebug.instrument(cMultiLineText)
 
 --[[
 	USAGE
@@ -47,18 +48,18 @@ end
 
 --*******************************************************
 function cMultiLineText:prv__Init(paOptions)
-	cDebug:print(DEBUG__DEBUG, "cMultiLineText: setting text ", paOptions.text)
+	self:debug(DEBUG__DEBUG, "setting text ", paOptions.text)
 
 	self.font = paOptions.font
 	if not utility.isValidFont(self.font) then
 		self.font= self.defaultFont
-		cDebug:print(DEBUG__WARN, "cMultiLineText: setting default font:", self.font )
+		self:debug(DEBUG__WARN, "setting default font:", self.font )
 	end
 	
 	self.fontsize = paOptions.fontsize
 	if self.fontsize == nil then
 		self.fontsize  = self.defaultFontSize
-		cDebug:print(DEBUG__WARN, "cMultiLineText: setting default fontsize: ", self.fontsize)
+		self:debug(DEBUG__WARN, "setting default fontsize: ", self.fontsize)
 	end
 	
 	self.align = paOptions.align
@@ -86,7 +87,7 @@ function cMultiLineText:setText(psText)
 	-- add the text
 	oText = self:prv__insertText(psText, iY)
 	if oText.width > self.maxWidth then
-		cDebug:print(DEBUG__DEBUG, "-- wrapping")
+		self:debug(DEBUG__DEBUG, "-- wrapping")
 		oText.text = ""
 
 		aStrings = utility.splitString(psText)
@@ -98,12 +99,12 @@ function cMultiLineText:setText(psText)
 
 			if oText.width > self.maxWidth then
 				oText.text = sOldText 
-				cDebug:print(DEBUG__DEBUG, " --text: ", oText.text )
+				self:debug(DEBUG__DEBUG, " --text: ", oText.text )
 				iY = iY + oText.height
 
 				if self.maxHeight then
 					if iY + oText.height > self.maxHeight  then
-						cDebug:print(DEBUG__DEBUG, " --breaking out of loop height would exceed max")
+						self:debug(DEBUG__DEBUG, " --breaking out of loop height would exceed max")
 						break
 					end
 				end
@@ -111,7 +112,7 @@ function cMultiLineText:setText(psText)
 				oText = self:prv__insertText(sFragment, iY)
 			end
 		end
-		cDebug:print(DEBUG__DEBUG, " --text: ", oText.text )
+		self:debug(DEBUG__DEBUG, " --text: ", oText.text )
 	end
 	
 	-- align the texts
