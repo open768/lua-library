@@ -1,3 +1,10 @@
+--[[
+This work is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+	http://creativecommons.org/licenses/by-sa/3.0/
+Absolutely no warranties or guarantees given or implied - use at your own risk
+Copyright (C) 2013 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
+--]]
+
 require "inc.widget.decorator"
 require "inc.lib.lib-colours"
 
@@ -7,7 +14,7 @@ cTextButton = {
 	delay=250, eventName="onTap", 
 	cornerRadius=5, borderWidth=3, 
 	upColour="lightgray", upBorderColour="white" ,
-	downColour="yellow", downBorderColour="white" 
+	downColour="yellow", downBorderColour="white" ,padding=2
 }
 cLibEvents.instrument(cTextButton)
 cDebug.instrument(cTextButton)
@@ -23,6 +30,11 @@ function cTextButton:create( psText)
 end
 
 --*******************************************************
+function cTextButton:setFillColour(psColour)
+	self.up.rect:setFillColor(cColours.explode(cColours:getRGB(psColour)))
+end
+
+--*******************************************************
 function cTextButton:prv_init(psText)
 	local oText, oDown, oUp
 	
@@ -30,7 +42,7 @@ function cTextButton:prv_init(psText)
 	oText = display.newText(psText,0,0,self.fontName, self.fontSize)
 	oDown= cWidgetDecorator:create({
 			widget=oText,
-			cornerRadius=self.cornerRadius,
+			cornerRadius=self.cornerRadius, padding=self.padding,
 			backColour=cColours:getRGB(self.downColour), 
 			borderColour=cColours:getRGB(self.downBorderColour), 
 			borderWidth=self.borderWidth
@@ -43,7 +55,7 @@ function cTextButton:prv_init(psText)
 	oText:setTextColor(0,0,0)
 	oUp = cWidgetDecorator:create({
 		widget=oText,
-		cornerRadius=self.cornerRadius,
+		cornerRadius=self.cornerRadius,padding=self.padding,
 		backColour=cColours:getRGB(self.upColour), 
 		borderColour=cColours:getRGB(self.upBorderColour), 
 		borderWidth=self.borderWidth
