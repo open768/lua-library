@@ -10,10 +10,11 @@ for vardump require "inc.3lib.vardump"
 
 local lfs = require "lfs"
 require "inc.lib.lib-settings"
+require "inc.lib.lib-strings"
 
--- **********************************************************
--- * LIB-DEBUG
--- **********************************************************
+--########################################################
+--# LIB-DEBUG
+--########################################################
 DEBUG__NONE = 	1
 DEBUG__ERROR = 	2
 DEBUG__WARN = 	3
@@ -40,53 +41,8 @@ local DEBUG__DROIDROOT = "/sdcard"
 local DEBUG__KEY_LEVEL = "duckl"
 local DEBUG__KEY_WRITEFILE ="duckwife"
 
--- **********************************************************
-function cDebug:loadState()
-	self.DEBUG_LEVEL = cSettings:get(DEBUG__KEY_LEVEL, DEBUG__NONE )
-	self.writeToFile = cSettings:get(DEBUG__KEY_WRITEFILE, false)
-end
-
-function cDebug:saveState()
-	cSettings:set(DEBUG__KEY_LEVEL, self.DEBUG_LEVEL)
-	cSettings:set(DEBUG__KEY_WRITEFILE, self.writeToFile)
-	cSettings:commit()
-end
-
--- **********************************************************
-function cDebug:printOnce(piLevel, ...)
-	local sID
-	local aArg = {}
-	
-	local sID = self.toString(...)
-	
-	if not self.onceMemory then
-		self.onceMemory = {}
-	end
-	
-	if not self.onceMemory[sID] then
-		self:print(piLevel, sID)
-		self.onceMemory[sID]  = true
-	end
-end
-
--- **********************************************************
-function cDebug.toString(...)
-	local arg={...}
-	local aStrings, i, vArg, sTxt
-	
-	aStrings = {}
-	iLen = #arg
-	
-	for i=1, iLen do
-		vArg = arg[i]
-		sTxt = cDebug.prv__toString(vArg, 0)
-		table.insert (aStrings, sTxt)
-	end	
-
-	return table.concat(aStrings, "")
-end
-
--- **********************************************************
+--########################################################
+--########################################################
 function cDebug.instrument(poObj)
 	if not poObj then
 		cDebug:throw("object not instrumentable")
@@ -100,7 +56,40 @@ function cDebug.instrument(poObj)
 	end
 	
 	poObj.debug=cDebug.prv_debug_print
+	poObj.debugOnce=cDebug.prv_debug_print_once
 	poObj.throw=cDebug.prv_debug_throw
+end
+
+--########################################################
+--# to allow debugging to be changed at runtime
+--########################################################
+function cDebug:prv__loadState()
+	self.DEBUG_LEVEL = cSettings:get(DEBUG__KEY_LEVEL, DEBUG__NONE )
+	self.writeToFile = cSettings:get(DEBUG__KEY_WRITEFILE, false)
+end
+
+function cDebug:saveState()
+	cSettings:set(DEBUG__KEY_LEVEL, self.DEBUG_LEVEL)
+	cSettings:set(DEBUG__KEY_WRITEFILE, self.writeToFile)
+	cSettings:commit()
+end
+
+--########################################################
+--########################################################
+function cDebug:printOnce(piLevel, ...)
+	local sID
+	local aArg = {}
+	
+	local sID = cStrings.toString(...)
+	
+	if not self.onceMemory then
+		self.onceMemory = {}
+	end
+	
+	if not self.onceMemory[sID] then
+		self:print(piLevel, sID)
+		self.onceMemory[sID]  = true
+	end
 end
 
 -- **********************************************************
@@ -116,7 +105,7 @@ function cDebug:print(piLevel, ...)
 	if  iLen == 0 then
 		sText = "No message to display"
 	else
-		sText = self.toString(...)
+		sText = cStrings.toString(...)
 	end
 	
 	sDate = os.date(self.dateFormat)
@@ -176,41 +165,6 @@ function cDebug:prv__print(psMsg)
 end
 
 -- **********************************************************
-function cDebug.prv__toString(pvWhat, piLevel)
-	local aStrings, i, sType, k,v
-
-	aStrings = {}
-
-	if pvWhat == nil then
-		table.insert(aStrings,"nil")
-	else
-		sType = type(pvWhat)
-		if (sType=="string") then
-			table.insert(aStrings,pvWhat)
-		elseif (sType=="table") then
-			table.insert (aStrings, "table[")
-			if piLevel < DEBUG_MAX_DEPTH then
-				for k,v in pairs(pvWhat) do
-					table.insert (aStrings, "{"..cDebug.prv__toString(k, piLevel +1)..":")
-					table.insert (aStrings, cDebug.prv__toString(v, piLevel +1).."}")
-				end
-			end
-			table.insert (aStrings, "]")
-		elseif (sType=="function") then
-			table.insert(aStrings,"<function>")
-		elseif (sType=="number") then
-			table.insert(aStrings,tostring(pvWhat))
-		else
-			table.insert(aStrings,"{"..sType.."}")
-			table.insert(aStrings,tostring(pvWhat))
-		end
-	end
-	
-		
-	return table.concat(aStrings, "")
-end
-
--- **********************************************************
 function cDebug:prv_filePrint(psMessage)
 	local sFolderPath, sFilePath, sErr
 
@@ -249,6 +203,10 @@ end
 function cDebug.prv_debug_print(poObj, piLevel, ...)
 	cDebug:print(piLevel, poObj.className, ": ", ...)
 end
+-- **********************************************************
+function cDebug.prv_debug_print_once(poObj, piLevel, ...)
+	cDebug:printOnce(piLevel, poObj.className, ": ", ...)
+end
 
 -- **********************************************************
 function cDebug.prv_debug_throw(poObj,  ...)
@@ -258,7 +216,7 @@ end
 --########################################################
 --# INIT
 --########################################################
-cDebug:loadState()
+cDebug:prv__loadState()
 print "##cDebug needs android permission android.permission.WRITE_EXTERNAL_STORAGE"
 
 
