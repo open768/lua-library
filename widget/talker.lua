@@ -110,7 +110,7 @@ function cTalker:prv_addButtons()
 	oM = self:prv_addButton({label="M", width=30},"onClickM",oF,display.TopRightReferencePoint,display.TopLeftReferencePoint,0,0)
 	oO = self:prv_addButton({label="O", width=30},"onClickO",oM,display.TopRightReferencePoint,display.TopLeftReferencePoint,0,0)
 	oTh = self:prv_addButton({label="Th", width=30},"onClickTH",oO,display.TopRightReferencePoint,display.TopLeftReferencePoint,0,0)
-	oCons = self:prv_addButton({label="CON", width=50},"onClickCons",oTh,display.TopRightReferencePoint,display.TopLeftReferencePoint,0,0)
+	oCons = self:prv_addButton({label="Con", width=50},"onClickCons",oTh,display.TopRightReferencePoint,display.TopLeftReferencePoint,0,0)
 	
 	self.buttons.play = oPlay
 	self.buttons.stop = oStop
