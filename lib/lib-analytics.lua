@@ -8,23 +8,27 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 require "inc.lib.lib-utility"
 if not cDebug then require "inc.lib.lib-debug" end
 
-local moAnalytics = require("analytics")
+--[[
+	analytics no longer available :-(
+	--local moAnalytics = require("analytics")
+--]]
 
 cAnalytics = {className="cAnalytics"}
 cDebug.instrument(cAnalytics)
 
-function cAnalytics:init(psID)
+function cAnalytics.init(psID)
 	if psID==nil then cDebug:throw("Analytics:init called with a . not a :") end
 	
 	if utility.isSimulator then
-		self:debug(DEBUG__WARN,"** Analytics not available on simulator")
+		cAnalytics:debug(DEBUG__WARN,"** Analytics not available on simulator")
 	else
-		moAnalytics.init(psID)
+		--moAnalytics.init(psID)
 	end
 end
 
 function cAnalytics.logEvent(psMessage)
+	cAnalytics:debug(DEBUG__DEBUG, psMessage)
 	if not utility.isSimulator then
-		moAnalytics.logEvent(psMessage)
+		--moAnalytics.logEvent(psMessage)
 	end
 end
