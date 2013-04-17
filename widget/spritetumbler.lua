@@ -144,6 +144,7 @@ cTumblingSprite={
 	className="cTumblingSprite"
 }
 cLibEvents.instrument(cTumblingSprite)
+cDebug.instrument(cTumblingSprite)
 
 function cTumblingSprite:create( poSprite)
 	local oDraggable
