@@ -5,6 +5,7 @@ Absolutely no warranties or guarantees given or implied - use at your own risk
 Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.uk/
 --]]
 require "inc.lib.lib-utility"
+require "inc.lib.lib-strings"
 require "inc.lib.lib-class"
 
 cMultiLineText = {
@@ -90,7 +91,7 @@ function cMultiLineText:setText(psText)
 		self:debug(DEBUG__DEBUG, "-- wrapping")
 		oText.text = ""
 
-		aStrings = utility.splitString(psText)
+		aStrings = cStrings.splitString(psText)
 		
 		for iIndex=1, #aStrings do
 			sFragment = aStrings[iIndex]

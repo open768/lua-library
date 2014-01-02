@@ -36,142 +36,29 @@ parameters to :add function
 require "inc.lib.lib-events"
 require "inc.lib.lib-class"
 require "inc.lib.lib-stack"
+require "inc.lib.animator-item"
 
 --########################################################
 --#
 --########################################################
-cAnimatorItem = { className="cAnimatorItem" , eventName="onTransitionComplete"}
-cLibEvents.instrument(cAnimatorItem)
-cDebug.instrument(cAnimatorItem)
-
---*******************************************************
-function cAnimatorItem:create(poObj, paFinalState, poOptions)
-	local oInstance = cClass.createInstance(self)
-	
-	oInstance.obj=poObj
-	oInstance.state=paFinalState
-	oInstance.wait=poOptions.wait
-	oInstance.waitSFX=poOptions.waitSFX
-	oInstance.isSetup=poOptions.isSetup
-	oInstance.isEvent=poOptions.isEvent
-	oInstance.delay=poOptions.delay
-	if oInstance.delay == nil then oInstance.delay = 0 end
-	oInstance.sfx=poOptions.sfx
-	oInstance.sndplayer = nil
-	oInstance.animator = nil
-	oInstance.inTransition = false
-	oInstance.serialNo=-1
-	oInstance.timerObj = nil
-	return oInstance
-end
-
---*******************************************************
-function cAnimatorItem:execute()
-	if self.inTransition then
-		self:throw("- allready executing")
-	end
-	self.inTransition = true
-	
-	if self.delay > 0 then
-		self.timerObj = timer.performWithDelay(self.delay, self)
-	else
-		self:prv_execute()
-	end
-end
-
---*******************************************************
-function cAnimatorItem:timer(poEvent)
-	self:debug(DEBUG__EXTRA_DEBUG, "finised timer : ", self.serialNo)
-	self.timerObj  = nil
-	self:prv_execute()
-end
-
---*******************************************************
-function cAnimatorItem:prv_execute()
-	local bWait = self.wait
-	
-	self:debug(DEBUG__EXTRA_DEBUG, "executing anim: ", self.serialNo)
-	
-	-- *** stream the sound if defined - will always do the transition
-	if self.sfx then
-		self.sndplayer = cSoundPlayer:create({self.sfx})
-		if self.waitSFX then
-			self.sndplayer.eventName = "onSfxEnd"
-			self.sndplayer:addListener("onSfxEnd", self) 
-			self.waitSFX = true
-			self.SFXEnded = false
-			bWait= true
-		end
-		self:debug(DEBUG__DEBUG, "playing sound")
-		self.sndplayer:play()
-	end
-	
-	-- do the animation
-	self.state.onComplete = self
-	transition.to(self.obj, self.state)
-	
-	-- if not waiting for the animation to finish do the next straight away
-	if not bWait then self:nextItem() end
-end
-
---*******************************************************
-function cAnimatorItem:onComplete(poEvent)
-	self:debug(DEBUG__EXTRA_DEBUG, "completed anim: ", self.serialNo)
-
-	self.inTransition = false
-	
-	-- if sound is taking longer then wait
-	if  (self.waitSFX and not self.SFXEnded)  then
-		self:debug(DEBUG__EXTRA_DEBUG, "waiting for sound to finish")
-	elseif self.wait then 
-		self:debug(DEBUG__EXTRA_DEBUG, "going to next item")
-		self:nextItem()
-	else
-		self:debug(DEBUG__EXTRA_DEBUG, "nothing to do")
-	end
-end
-
---*******************************************************
-function cAnimatorItem:onSfxEnd(poEvent)
-	self:debug(DEBUG__EXTRA_DEBUG, "completed sound: ", self.serialNo)
-	self.SFXEnded = true
-	
-	-- if animation  is taking longer wait 
-	if self.inTransition then
-		self:debug(DEBUG__EXTRA_DEBUG, "waiting for animation")
-	elseif self.waitSFX or self.wait then
-		self:debug(DEBUG__EXTRA_DEBUG, "going to next item")
-		self.waitSFX = false
-		self:nextItem()
-	else
-		self:debug(DEBUG__EXTRA_DEBUG, "nothing to do")
-	end
-end
-
---*******************************************************
--- doesnt need to use notify as its slower
-function cAnimatorItem:nextItem()
-	self.animator:onTransitionComplete({serialNo=self.serialNo })
-end
-
-
-
---########################################################
---#
---########################################################
-cAnimator = {eventName="onComplete", className="cAnimator"}
+cAnimator = {eventName="onComplete", className="cAnimator", stopped = false}
 cLibEvents.instrument(cAnimator)
 cDebug.instrument(cAnimator)
 
-function cAnimator:create( )
+function cAnimator:create( psAnimName)
+	if not psAnimName then self:throw("needs a name") end
 	local oInstance = cClass.createInstance(self)
 	
 	oInstance.commands = cStack:create( cStackModes.filo)
+	oInstance.runningCommands = {}
+	
+	oInstance.finishedCommands = cStack:create( cStackModes.filo)
 	oInstance.wait4All = false
 	oInstance.completed = false
 	oInstance.animSerialNo = 0
 	oInstance.previousItem=nil
 	oInstance.animCounter = 0
+	oInstance.animName = psAnimName
 	
 	-- return the instance
 	return oInstance
@@ -187,10 +74,10 @@ function cAnimator:add( poObj, paFinalState, poOptions)
 		self:throw("no options cAnimator.add called instead of cAnimator:add")
 	end
 	if (poObj==nil) then
-		self:throw("cAnimator - attempt to add empty object")
+		self:throw("attempt to add empty object")
 	end
 	if (paFinalState.time == nil) then
-		self:debugOnce(DEBUG__WARN,"cAnimator:add no time set - using default")
+		self:debugOnce(DEBUG__WARN,"no time set - using default")
 	end
 	
 	-- increase the serial number
@@ -208,9 +95,20 @@ end
 
 --*******************************************************
 function cAnimator:stop()
-	-- not sure this is a good idea 
-	-- as dont want to leave animation in unfinished state
-	-- best to apply all transformations quickly and then stop
+	local i, oItem
+	self:debug(DEBUG__DEBUG, "stopping animator")
+	
+	self.stopped = true
+	-- stop all running transitions
+	for i =1, table.maxn(self.runningCommands) do
+		oItem = self.runningCommands[i]
+		if oItem then		
+			oItem:stop()
+			self.runningCommands[i] = nil
+		end
+	end
+
+	-- apply all remaining transformations quickly
 end
 
 --*******************************************************
@@ -218,7 +116,7 @@ function cAnimator:go()
 	local oItm, sState, sValue
 	
 	if self == nil then
-		self:throw ("called cAnimator.go() instead of cAnimator:go()")
+		self:throw ("called .go() instead of :go()")
 	end
 	
 	-- dont do anything if no commands
@@ -227,6 +125,7 @@ function cAnimator:go()
 		return
 	end
 	
+	self:debug(DEBUG__DEBUG,"Go: ", self.animName)
 	self.step=0
 	self.nComplete = 0
 	self.completed = false
@@ -240,8 +139,9 @@ end
 -- ============================================================
 function cAnimator:prv_notifyComplete()
 	if 	self.completed then
-		self:throw("Animator completed more than once!!!")
+		self:throw("completed more than once!!!")
 	end
+	self:debug(DEBUG__DEBUG,"completed: ", self.animName)
 
 	self.completed = true
 	self.commands = nil		--clear out memory
@@ -252,14 +152,7 @@ end
 -- =
 -- ============================================================
 function cAnimator:prv_doSetupStep(poItem)
-	local sKey, sValue
-	
-	-- *** do the setup if defined
-	poItem.obj.isVisible = true
-	for  sKey,sValue in pairs(poItem.state) do
-		poItem.obj[sKey] = sValue
-	end
-
+	poItem:toFinalState()
 	self:prv_doNext()
 end
 
@@ -273,15 +166,19 @@ function cAnimator:prv_doEventStep(poItem)
 		self:debug(DEBUG__INFO,"Event:",sKey," -> ",sValue) 
 	end
 	
-	self:debug(DEBUG__INFO,"cAnimator dispatching event: ") 
+	self:debug(DEBUG__INFO,"dispatching event: ") 
 	poItem.obj:notify(oEvent)
 	self:prv_doNext()
 end
 
 --*******************************************************
 function cAnimator:onTransitionComplete(poEvent)
-	self:debug(DEBUG__DEBUG, "cAnimator: completed anim serial:", poEvent.serialNo)
-	self.animCounter = self.animCounter  - poEvent.serialNo
+	local iSerial
+	
+	iSerial = poEvent.item.serialNo
+	self:debug(DEBUG__DEBUG, "completed anim serial:", iSerial)
+	self.animCounter = self.animCounter  - iSerial
+	self.runningCommands[iSerial] = nil
 	self:prv_doNext()
 end
 
@@ -289,6 +186,10 @@ end
 function cAnimator:prv_doNext()
 	local oTopItem
 
+	if self.stopped then
+		return
+	end 
+	
 	if 	self.completed then
 		self:throw("Animator executing after completed !!!")
 	end
@@ -325,6 +226,7 @@ function cAnimator:prv_doNext()
 		self:prv_doEventStep(oTopItem)
 	else
 		self.animCounter = self.animCounter  + oTopItem.serialNo
+		self.runningCommands[oTopItem.serialNo] = oTopItem
 		oTopItem:execute()
 	end
 end

@@ -31,6 +31,7 @@ cDebug.instrument(cObjMaker)
 function cObjMaker:create( psSpriteFile, poSpriteData, paMap)
 	local oInstance
 	
+	self:debug(DEBUG__EXTRA_DEBUG, "creating")
 	-- validate 
 	if (psSpriteFile==nil) then self:throw("no sprite file") end
 	if (poSpriteData==nil) then self:throw("no sprite data") end
@@ -43,6 +44,7 @@ function cObjMaker:create( psSpriteFile, poSpriteData, paMap)
 	oInstance.spriteSheet = nil
 	
 	oInstance:_initobjmaker(psSpriteFile, poSpriteData, paMap)
+	self:debug(DEBUG__EXTRA_DEBUG, "finished")
 
 	-- return instance
 	return oInstance

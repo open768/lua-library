@@ -9,7 +9,7 @@ require "inc.lib.lib-animate"
 
 cThanks = { 
 	className="cThanks",
-	bgImage = "images/thanks.png",
+	bgImage = "images/signs/thanks.png",
 	scaleValue=0.8,
 	onClosedEvent = "onThanksClosed",
 	bgTime=400,
@@ -77,7 +77,7 @@ function cThanks:prv__init()
 	oSignGrp:setReferencePoint(display.CenterReferencePoint)
 	
 	-- set up the animation sequence to bring the warning to the middle of the screen
-	oAnim = cAnimator:create()
+	oAnim = cAnimator:create("thanks")
 	oAnim.eventName = "prv__onShow"
 	oAnim:addListener("prv__onShow", self )
 
@@ -122,7 +122,7 @@ function cThanks:prv__close()
 	self:debug(DEBUG__DEBUG, "closing");
 	
 	-- set up the animation sequence to bring the warning to the middle of the screen
-	oAnim = cAnimator:create()
+	oAnim = cAnimator:create("close thanks")
 	oAnim.autopurge = true
 	oAnim.eventName = "prv__onClose"
 	oAnim:addListener("prv__onClose", self )

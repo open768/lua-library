@@ -10,6 +10,7 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 --
 local http = require("socket.http")
 local ltn12 = require("ltn12")
+require "inc.lib.lib-events"
 
 cHttp = {
 	className="cHttp",
@@ -22,29 +23,39 @@ cHttp = {
 		["iPhone OS"] = "Mozilla/5.0 (iPod; U; CPU iPhone OS 4_3_3 like Mac OS X) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5"
 	},
 	forceUserAgent = nil,
-	userAgent = nil
+	userAgent = nil,
+	netTimeout=5
 }
 cDebug.instrument(cHttp)
 
 
 -- **********************************************************
-function cHttp:init()
+function cHttp:timer()
+	local fnCallBack, sURL
+	
+	self:debug(DEBUG__DEBUG, "checking network connectivity")
 	if network.canDetectNetworkStatusChanges then
-		local fnCallBack = function(poEvent) self:netWorkListener(poEvent) end
+		self:debug(DEBUG__DEBUG, "builtin")
+		fnCallBack = function(poEvent) self:prv__statusListener(poEvent) end
 		network.setStatusListener( self.reachableDomain, fnCallBack )
 	else
-		self:checkConnectivity()
-		self:debug(DEBUG__INFO, "Net is reachable: ", self.isNetReachable)
+		fnCallBack = function(poEvent) self:prv__httpListener(poEvent) end
+		sURL = "http://"..self.reachableDomain.."/"
+		self:debug(DEBUG__DEBUG, "checking network: ", sURL, {timeout=self.netTimeout})
+		network.request(sURL, "GET", fnCallBack)
 	end
 end
 
 -- **********************************************************
-function cHttp:checkConnectivity()
-	local oResponse = http.request("http://"..self.reachableDomain.."/")
-	self.isNetReachable = (oResponse ~= nil)
-	self:debug(DEBUG__INFO, "checkConnectivity Net is reachable: ", self.isNetReachable)
-	
-	return self.isNetReachable
+function cHttp:prv__httpListener(poEvent)
+	self.isNetReachable = not poEvent.isError
+	self:debug(DEBUG__INFO, "network is reachable ", self.isNetReachable)
+end
+
+-- **********************************************************
+function cHttp:prv__statusListener(poEvent)
+	self.isNetReachable = poEvent.isReachable
+	print ("network is reachable "..poEvent.isNetReachable)
 end
 
 -- **********************************************************
@@ -103,12 +114,7 @@ function cHttp:escape (str)
 	return str
 end
 
--- **********************************************************
-function cHttp:netWorkListener(poEvent)
-	self.sNetReachable = poEvent.isReachable
-	vardump(poEvent)
-	print ("network is reachable "..poEvent.isReachable)
-end
+
 
 -- **********************************************************
 -- based on discussion in - http://developer.anscamobile.com/forum/2011/04/30/ads-revenue-examples
@@ -159,4 +165,4 @@ function cHttp:getUserAgent()
 end
 
 -- **********************************************************
-cHttp:init()
+timer.performWithDelay(10, cHttp,1)

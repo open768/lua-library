@@ -6,6 +6,47 @@ local LOW_A = string.byte("a")
 local LOW_Z = string.byte("b")
 local TOSTRING_MAX_DEPTH = 1
 
+
+--*******************************************************
+function cStrings.splitString(psString)
+	local aStrings = {}
+	cDebug:print(DEBUG__EXTRA_DEBUG, " splitting text: ", psString)
+	cStrings.prv__splitString(aStrings,psString)
+	return aStrings
+end
+
+--*******************************************************
+function cStrings.prv__splitString(paArray, psString)
+	local iPos, sL, sR
+	
+	iPos = psString:find("[%s;:,-%.]")
+	if iPos == nil then
+		table.insert(paArray, psString)
+	else
+		sL = psString:sub(1,iPos)
+		sR = psString:sub(iPos+1)
+
+		table.insert(paArray, sL)
+		cStrings.prv__splitString(paArray, sR)
+	end
+end
+
+--*******************************************************
+function cStrings.extract(psStr, psStart, psEnd)
+	local aStart, aEnd, sExtract
+	local aStart = {}
+	local aEnd={}
+	
+	aStart[1],aStart[2] = psStr:find(psStart) 
+	aEnd[1],aEnd[2] = psStr:find(psEnd) 
+	return psStr:sub( aStart[2]+1, aEnd[1]-1)
+end
+
+-- **********************************************************
+function cStrings.findNoCase(psStr, psWhat)
+	return string.find( string.lower(psStr), string.lower(psWhat),1)
+end
+
 -- **********************************************************
 function cStrings.isUpper( psChar)
 	local iCode = string.byte(psChar)
@@ -74,7 +115,7 @@ function cStrings.prv__toString(pvWhat, piLevel)
 			table.insert (aStrings, "]")
 		elseif (sType=="function") then
 			table.insert(aStrings,"<function>")
-		elseif (sType=="number") then
+		elseif (sType=="number" or sType=="boolean" ) then
 			table.insert(aStrings,tostring(pvWhat))
 		else
 			table.insert(aStrings,"{"..sType.."}")

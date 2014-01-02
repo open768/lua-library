@@ -15,16 +15,21 @@ require "inc.lib.lib-stack"
 --# PRIVATE
 --########################################################
 function cSoundPlayer:prv_playInSeq(piIndex)
-	local fnCallback
+	local fnCallback, sFilename
 	
 	if not self.files then
 		self:throw("no Files to play")
 	end
 	
-	if self.stopped then return end
+	if self.stopped then 
+		self:debug(DEBUG__DEBUG, "cant play stopped")
+		return 
+	end
 
+	sFilename = self.files[piIndex]
+	self:debug(DEBUG__DEBUG, "playing: ", sFilename)
 	self.channel = audio.findFreeChannel()
-	self.handle = audio.loadStream(self.files[piIndex])
+	self.handle = audio.loadStream(sFilename)
 	self.nowPlaying = piIndex
 	
 	fnCallback = function(poEvent) 	self:onComplete(poEvent) end
@@ -71,7 +76,10 @@ end
 --# EVENTS
 --########################################################
 function cSoundPlayer:onComplete(poEvent)
-	local oListener
+	local oListener, sFilename
+	
+	sFilename = self.files[self.nowPlaying]
+	self:debug(DEBUG__DEBUG, "finished:", sFilename)
 	-- clear out the previous audio
 	audio.dispose(self.handle)
 	self.handle = nil

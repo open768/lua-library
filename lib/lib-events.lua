@@ -26,8 +26,7 @@ cLibEvents = {timerDelay = 0, className="cLibEvents"}
 cDebug.instrument(cLibEvents)
 
 --*******************************************************
---* call this method to add event listeners to a table 
--- usage dispatchEvent({name="myevent"})
+--* transparently instruments the passed in class
 --*******************************************************
 function cLibEvents.instrument(poObj)
 	if poObj["addListener"] then 
@@ -72,7 +71,7 @@ function cLibEvents.notify( poObj, poEvent)
 			local bSuccess, retval
 			bSuccess, retval = pcall( poObj.prv__notify, poObj, poEvent)
 			if not bSuccess then
-				cDebug:print(DEBUG__ERROR,"notify failed:", poEvent.name,":", retval)
+				cLibEvents:debug(DEBUG__ERROR,"notify failed:", poEvent.name,":", retval)
 			end
 		end
 	timer.performWithDelay( cLibEvents.timerDelay, fnPayload )
@@ -93,11 +92,11 @@ function cLibEvents.prv__notify( poObj, poEvent)
 		return;
 	end
 	
-	cDebug:print(DEBUG__EXTRA_DEBUG,"cLibEvents dispatching event: ", sEventName) 
+	cLibEvents:debug(DEBUG__EXTRA_DEBUG,"dispatching event: ", sEventName) 
 	oListener = poObj.EventListeners[sEventName] 
 	if oListener then
 		if type(oListener) == "function" then
-			cDebug:print(DEBUG__EXTRA_DEBUG,"cLibEvents calling function :" ) 
+			cLibEvents:debug(DEBUG__EXTRA_DEBUG,"calling function :" ) 
 			bOk,oStatusOrMsg = pcall(oListener, poEvent)
 			if bOk then
 				return oStatusOrMsg 
@@ -107,7 +106,7 @@ function cLibEvents.prv__notify( poObj, poEvent)
 		else
 			oCall = oListener[sEventName]
 			if oCall then 
-				cDebug:print(DEBUG__EXTRA_DEBUG,"cLibEvents calling table listener:" ) 
+				cLibEvents:debug(DEBUG__EXTRA_DEBUG,"calling table listener:" ) 
 				bOk,oStatusOrMsg = pcall(oCall, oListener, poEvent)
 				if bOk then
 					return oStatusOrMsg 
@@ -116,7 +115,7 @@ function cLibEvents.prv__notify( poObj, poEvent)
 					return
 				end
 			else
-				self:throw("CLibEvents: method not found on listener -", sEventName)
+				cLibEvents:throw("method not found on listener -", sEventName)
 			end
 		end
 	else
@@ -130,13 +129,13 @@ function cLibEvents.makeEventClosure( poListener, psEvent)
 	local fnClosure 
 	
 	if poListener == nil then
-		cLibEvents:throw("makeEventClosure no listener specified")
+		cLibEvents:throw("no listener specified")
 	end
 	
 	fnClosure = function(poEvent)
 		local oCall = poListener[psEvent]
 		if oCall == nil then
-			cLibEvents:throw("makeEventClosure no method found that corresponds to ", psEvent)
+			cLibEvents:throw("no method found that corresponds to ", psEvent)
 		end
 		return oCall(poListener, poEvent)
 	end

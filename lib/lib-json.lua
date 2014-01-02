@@ -6,7 +6,6 @@ Copyright (C) 2012 ChickenKatsu All Rights Reserved. http://www.chickenkatsu.co.
 --]]
 local json = require "json"
 
-
 -- **********************************************************
 -- * UTILITY CLASS 
 -- **********************************************************

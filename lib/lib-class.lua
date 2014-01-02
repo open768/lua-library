@@ -9,11 +9,6 @@ if not cDebug then error "cDebug object not found" end
 cClass = {className = "cClass"}
 cDebug.instrument(cClass)
 
---***********************************************************
---sets the index function to be the same of another table - thus inheritance
-function cClass.setParent( poObj, poParent)
-	setmetatable( poObj, { __index = poParent} )  
-end
 
 --***********************************************************
 function cClass.createGroupInstance(poExemplar)
@@ -41,11 +36,16 @@ function cClass.createInstance(poExemplar)
 	cClass:debug(DEBUG__EXTRA_DEBUG, "cClass.CI create: ", poExemplar.className)
 	oInstance = {}
 	oInstance.className = poExemplar.className
-	cClass.setParent ( oInstance , poExemplar )  
+	cClass.prv_setParent ( oInstance , poExemplar )  
 
 	return oInstance
 end
 
+--***********************************************************
+--sets the index function to be the same of another table - thus inheritance
+function cClass.prv_setParent( poObj, poParent)
+	setmetatable( poObj, { __index = poParent} )  
+end
 --***********************************************************
 --adds methods from named parent - by copying table
 -- not tested
@@ -61,18 +61,4 @@ function cClass.addParent( poObj, poParent)
 			poObj[sName] = vValue
 		end
     end
-end
-
---***********************************************************
-function cClass.showMembers( poObj)
-	local sName, vValue, sType
-	
-	for sName,vValue in pairs(poObj) do
-		sType = type(vValue)
-		if (sType == "table") or (sType == "function") then
-			print (sName..": ".. sType)
-		else
-			print (sName..": "..tostring(vValue))
-		end
-	end
 end

@@ -35,10 +35,15 @@ function cTextButton:setFillColour(psColour)
 end
 
 --*******************************************************
+function cTextButton:setTextColour(psColour)
+	self.up.text:setTextColor(cColours.explode(cColours:getRGB(psColour)))
+end
+
+--*******************************************************
 function cTextButton:prv_init(psText)
 	local oText, oDown, oUp
 	
-	-- create the up and down graphics
+	-- create down graphics
 	oText = display.newText(psText,0,0,self.fontName, self.fontSize)
 	oDown= cWidgetDecorator:create({
 			widget=oText,
@@ -48,9 +53,11 @@ function cTextButton:prv_init(psText)
 			borderWidth=self.borderWidth
 	})
 	oDown.isVisible = false
+	oDown.text = oText
 	self:insert(oDown)
 	self.down = oDown
 	
+	-- create the up graphics
 	oText = display.newText(psText,0,0,self.fontName, self.fontSize)
 	oText:setTextColor(0,0,0)
 	oUp = cWidgetDecorator:create({
@@ -60,12 +67,14 @@ function cTextButton:prv_init(psText)
 		borderColour=cColours:getRGB(self.upBorderColour), 
 		borderWidth=self.borderWidth
 	})
+	oUp.text = oText
 	self:insert(oUp)
 	self.up = oUp
 	
 	-- create the up and down graphics
 	self.inTouch = false
 	self.isUp = true
+	self.label = psText
 	self:addEventListener("touch", self)
 end
 
@@ -95,5 +104,5 @@ function cTextButton:timer(poEvent)
 	
 	self.inTouch = false
 	self.isUp = true
-	self:notify({name=self.eventName})
+	self:notify({name=self.eventName, obj=self})
 end

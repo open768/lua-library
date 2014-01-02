@@ -70,6 +70,8 @@ function cCards:createScene(poScene)
 	
 	-- remember it in the cards table
 	self.cards[sSceneName] = poScene
+	
+	self:debug(DEBUG__DEBUG , "created: ", sSceneName)
 end
 
 --*******************************************************

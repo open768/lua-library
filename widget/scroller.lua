@@ -273,7 +273,9 @@ function cScroller:_moveUp( piDy)
 		bGetObj = true
 	else
 		oBotObj = self.onScreen [iBottomIndex]
-		bGetObj  = ((oBotObj.y + oBotObj.contentHeight) < self.itemGroupHeight )
+		if oBotObj.y then 
+			bGetObj  = ((oBotObj.y + oBotObj.contentHeight) < self.itemGroupHeight )
+		end 
 	end
 	
 	if bGetObj  then
@@ -287,11 +289,13 @@ function cScroller:_moveUp( piDy)
 	for i = #(self.onScreen),1,-1 do
 
 		oObj = self.onScreen[i]
-		oObj.y = oObj.y - piDy
-		if oObj.y + oObj.contentHeight  < 0 then
-			table.remove(self.onScreen, i)
-			table.insert(self.offScreen, oObj)
-			oObj.isVisible = false
+		if oObj.y then
+			oObj.y = oObj.y - piDy
+			if oObj.y + oObj.contentHeight  < 0 then
+				table.remove(self.onScreen, i)
+				table.insert(self.offScreen, oObj)
+				oObj.isVisible = false
+			end
 		end
 	end
 	

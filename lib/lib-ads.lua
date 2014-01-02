@@ -13,7 +13,8 @@ cAds = {
 	whichWay = "portrait",
 	applicationID= "not set",
 	adEvents = 0,
-	adEventThreshold = 3
+	adEventThreshold = 3,
+	ads_enabled = false
 }
 cDebug.instrument(cAds)
 
@@ -97,12 +98,14 @@ end
 
 -- *********************************************************
 function cAds:yesNoFullScreenAd()
-	self.adEvents = self.adEvents  + 1
-	if self.adEvents >= self.adEventThreshold then
-		self.adEvents  = 0
-		return true
-	else
-		return false
+	if self.adsEnabled then
+		self.adEvents = self.adEvents  + 1
+		if self.adEvents >= self.adEventThreshold then
+			self.adEvents  = 0
+			return true
+		else
+			return false
+		end
 	end
 end
 

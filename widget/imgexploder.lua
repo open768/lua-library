@@ -19,7 +19,6 @@ cImgExploder = {
 	gap=0,rows=nil, cols=nil, ImgWidth=0, ImgHeight=0, minSpeed=100
 }
 cLibEvents.instrument(cImgExploder)
-cDebug.instrument(cImgExploder)
 
 -- ********************************************************
 function cImgExploder.create(paOpts)
@@ -104,7 +103,7 @@ function cImgExploder:reset( piAnimSpeed)
 	local oAnim, iRow, iCol, oItem, bWait
 	
 	if self.exploding then
-		self:debug(DEBUG__DEBUG, "stopping...")
+		cDebug:print(DEBUG__DEBUG, "stopping...")
 		self:stop()
 	end
 	
@@ -134,10 +133,10 @@ end
 
 --########################################################
 function cImgExploder:delayedReset( piAnimSpeed)
-	local oAnim, iRow, iCol, oItem, bWait, iDelay, iIncr`
+	local oAnim, iRow, iCol, oItem, bWait, iDelay, iIncr
 	
 	if self.exploding then
-		self:debug(DEBUG__DEBUG, "stopping...")
+		cDebug:print(DEBUG__DEBUG, "stopping...")
 		self:stop()
 	end
 	

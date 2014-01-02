@@ -368,11 +368,7 @@ function utility.make2DArray(piRows)
 end
 
 -- ####################################################
--- # STRINGS
 -- ####################################################
-function utility.FindNoCase(psStr, psWhat)
-	return string.find( string.lower(psStr), string.lower(psWhat),1)
-end
 
 --*******************************************************
 function utility.defaultValue( pa, pDefault)
@@ -383,41 +379,6 @@ function utility.defaultValue( pa, pDefault)
 	end
 end
 
---*******************************************************
-function utility.extract(psStr, psStart, psEnd)
-	local aStart, aEnd, sExtract
-	local aStart = {}
-	local aEnd={}
-	
-	aStart[1],aStart[2] = psStr:find(psStart) 
-	aEnd[1],aEnd[2] = psStr:find(psEnd) 
-	return psStr:sub( aStart[2]+1, aEnd[1]-1)
-end
-
---*******************************************************
-function utility.splitString(psString)
-	local aStrings = {}
-	cDebug:print(DEBUG__EXTRA_DEBUG, " splitting text: ", psString)
-	utility.prv__splitString(aStrings,psString)
-	return aStrings
-end
-
---*******************************************************
-function utility.prv__splitString(paArray, psString)
-	local iPos, sL, sR
-	
-	iPos = psString:find("[%s;:,-%.]")
-	if iPos == nil then
-		table.insert(paArray, psString)
-	else
-		sL = psString:sub(1,iPos)
-		sR = psString:sub(iPos+1)
-		cDebug:print(DEBUG__EXTRA_DEBUG, " -- ", "LHS=", sL, " RHS=", sR)
-
-		table.insert(paArray, sL)
-		utility.prv__splitString(paArray, sR)
-	end
-end
 
 
 -- ####################################################

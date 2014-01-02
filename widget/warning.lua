@@ -10,7 +10,7 @@ require "inc.widget.multilinetext"
 
 cWarning = { 
 	className="cWarning",
-	bgImage = "images/emptysign.jpg",
+	bgImage = "images/signs/emptysign.jpg",
 	border = 0.1,
 	fontsize=32, 
 	scaleValue=1.7,
@@ -89,7 +89,7 @@ function cWarning:prv__init(psText)
 	oSignGrp:setReferencePoint(display.CenterReferencePoint)
 	
 	-- set up the animation sequence to bring the warning to the middle of the screen
-	oAnim = cAnimator:create()
+	oAnim = cAnimator:create("warning")
 	oAnim.eventName = "prv__onShow"
 	oAnim:addListener("prv__onShow", self )
 
@@ -133,7 +133,7 @@ function cWarning:prv__close()
 	self:debug(DEBUG__DEBUG, "closing");
 	
 	-- set up the animation sequence to bring the warning to the middle of the screen
-	oAnim = cAnimator:create()
+	oAnim = cAnimator:create("close warning")
 	oAnim.autopurge = true
 	oAnim.eventName = "prv__onClose"
 	oAnim:addListener("prv__onClose", self )

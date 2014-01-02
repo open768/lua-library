@@ -26,6 +26,7 @@ DEBUG_MAX_DEPTH = 1
 local aDebugLevels = {"NONE", "ERROR", "WARN", "INFO", "DEBUG", "EXTDEBUG"}
 
 cDebug = {
+	className="cDebug",
 	DEBUG_LEVEL=DEBUG__NONE, 
 	fileHandle=nil, 
 	remoteURL=nil, 
@@ -53,6 +54,10 @@ function cDebug.instrument(poObj)
 	end
 	if not poObj["className"] then 
 		cDebug:throw("cdebug:obj Missing Classname")
+	end
+	
+	if poObj.className == cDebug.className then
+		cDebug:throw("called incorrectly did you mean to use .instrument instead of :instrument")
 	end
 	
 	poObj.debug=cDebug.prv_debug_print
@@ -125,8 +130,11 @@ end
 
 -- **********************************************************
 function cDebug:throw(...)
-	cDebug:print(DEBUG__ERROR, ...)
-	error(table.concat({...}," "))
+	local sErr
+	
+	sErr = cStrings.toString(...)
+	cDebug:print(DEBUG__ERROR, sErr)
+	error(sErr)
 end
 
 -- **********************************************************

@@ -76,7 +76,7 @@ function cSending:prv_init()
 	
 	-- set up the animation sequence to bring the bubble group to the middle of the screen
 	oBubbleGrp:setReferencePoint(display.CenterReferencePoint)
-	oAnim = cAnimator:create()
+	oAnim = cAnimator:create("sending")
 	oAnim:add( oOverlay, {alpha=0, x=utility.Screen.Centre.x, y= utility.Screen.Centre.y}, {isSetup=true})
 	oAnim:add( oBubbleGrp, {x=utility.Screen.Centre.x, y= utility.Screen.h + oBubbleGrp.contentHeight}, {isSetup=true})
 	oAnim:add( oOverlay, {alpha=0.6, width=utility.Screen.w, height=utility.Screen.h, time=self.bgTime}, {wait=true})
